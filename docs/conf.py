@@ -46,6 +46,8 @@ nitpick_ignore = [("py:class", "numpy.typing.ArrayLike")]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "README.md"]
 
 html_theme = "sphinx_rtd_theme"
+html_title = "StrokeOutline"
+html_static_path = ["_static"]
 html_theme_options = {
     "navigation_depth": 4,
     "titles_only": False,

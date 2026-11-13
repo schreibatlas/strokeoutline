@@ -32,7 +32,31 @@ class SubdivisionLimitError(OutlineError):
 
 @dataclass(frozen=True)
 class OutlineConfig:
-    """Adaptive sampling and cap configuration."""
+    """Controls adaptive sampling and cap behavior for open paths.
+
+    Parameters
+    ----------
+    max_centerline_error : float
+        Maximum centerline deviation from a straight chord, in input coordinate
+        units. Smaller values generally produce more samples.
+    max_width_error : float
+        Maximum width-profile deviation from linear interpolation, in width
+        units. Smaller values sample changing widths more closely.
+    max_normal_angle_degrees : float
+        Maximum tangent direction change over a sampling interval, in degrees.
+        The value must be positive and less than 180.
+    cap : CapStyle
+        Cap style for open paths: ``"round"`` or ``"square"``. Ignored for
+        closed centerlines.
+    max_subdivision_depth : int
+        Maximum recursive subdivision depth. If sampling cannot meet the
+        tolerances by this depth, outlining raises ``SubdivisionLimitError``.
+
+    Notes
+    -----
+    Decreasing tolerances generally increases contour vertices and work. Keep
+    the defaults unless the application has a reason to tune them.
+    """
 
     max_centerline_error: float = 0.25
     max_width_error: float = 0.25
@@ -67,6 +91,18 @@ DEFAULT_OUTLINE_CONFIG = OutlineConfig()
 
 @dataclass(frozen=True)
 class OutlineResult:
+    """Result of a centerline expansion.
+
+    Parameters
+    ----------
+    contours : tuple[Contour, ...]
+        Output contours. Each non-empty contour is closed by repeating its
+        first point as its final point. The tuple may be empty.
+    bounds : tuple[float, float, float, float] or None
+        Aggregate ``(min_x, min_y, max_x, max_y)`` bounds, or ``None`` when
+        there are no contours, for example in ``combine_outlines(())``.
+    """
+
     contours: tuple[Contour, ...]
     bounds: tuple[float, float, float, float] | None
 
@@ -422,12 +458,43 @@ def outline(
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
 ) -> OutlineResult:
-    """Expand centerlines into closed contours.
+    """Expand centerlines into deterministic sampled closed contours.
 
-    Width is the full stroke diameter. For compatibility with the extracted
-    InkGrammar algorithm, normalized width progress is based on segment index
-    plus local segment parameter, not physical arc length, and restarts for
-    each independent subpath.
+    Parameters
+    ----------
+    path : Path2D or planarcurve.CubicPath
+        One or more centerline subpaths, or a cubic path accepted directly.
+    width : WidthProfile
+        A positive full diameter, a piecewise-linear knot sequence spanning
+        normalized progress from 0 to 1, or a callable from progress to width.
+    config : OutlineConfig, optional
+        Adaptive sampling tolerances and open-path cap choice.
+
+    Returns
+    -------
+    OutlineResult
+        Closed contour tuples and aggregate bounds in
+        ``(min_x, min_y, max_x, max_y)`` order.
+
+    Raises
+    ------
+    InvalidWidthError
+        If the width profile or an evaluated width is invalid.
+    DegeneratePathError
+        If the centerline contains a zero-length segment or tangent.
+    SubdivisionLimitError
+        If adaptive sampling cannot meet the configured tolerances within the
+        subdivision depth limit.
+    TypeError
+        If ``path`` is not a ``Path2D`` or ``planarcurve.CubicPath``.
+
+    Notes
+    -----
+    Width is the full stroke diameter, not the radius. Normalized width
+    progress is segment-index based:
+    ``u = (segment_index + local_segment_parameter) / segment_count``.
+    It is not physical arc length, and it restarts from zero for every
+    independent ``Subpath``. The configured cap applies only to open paths.
     """
     if isinstance(path, CubicPath):
         path = path_from_cubic_path(path)
@@ -448,7 +515,32 @@ def outline_disc(
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
 ) -> OutlineResult:
-    """Create a circular contour, evaluating a width profile at normalized midpoint."""
+    """Create a sampled circular contour from a center and width profile.
+
+    Parameters
+    ----------
+    center : Point2D
+        Center of the disc in the input coordinate system.
+    diameter : WidthProfile
+        Positive full diameter, width knots, or callable width profile.
+    config : OutlineConfig, optional
+        Sampling tolerance used to choose the circular contour resolution.
+
+    Returns
+    -------
+    OutlineResult
+        One explicitly closed circular contour and its bounds.
+
+    Raises
+    ------
+    InvalidWidthError
+        If the width profile or its evaluated value is invalid.
+
+    Notes
+    -----
+    Since a point has no path progression, a width profile is evaluated at
+    normalized progress ``u == 0.5``.
+    """
     width_at = _width_function(diameter)
     diameter_value = width_at(0.5)
     radius = diameter_value / 2

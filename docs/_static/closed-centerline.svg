@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" role="img" aria-labelledby="title desc">
+  <title id="title">Closed centerline produces two contours</title>
+  <desc id="desc">A dashed rectangular centerline is surrounded by an outer contour and an inner contour. Arrows on the two contours point in opposite winding directions.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7" fill="none" stroke="#333" stroke-width="1.5" />
+    </marker>
+  </defs>
+  <rect width="560" height="300" fill="#ffffff" />
+  <rect x="92" y="48" width="376" height="204" rx="12" fill="#cdeac0" fill-opacity="0.35" stroke="#18864b" stroke-width="3" />
+  <rect x="142" y="98" width="276" height="104" rx="5" fill="#ffffff" stroke="#6a4c93" stroke-width="3" />
+  <rect x="118" y="74" width="324" height="152" rx="8" fill="none" stroke="#1769aa" stroke-width="3" stroke-dasharray="8 6" />
+  <path d="M180 48 H330" fill="none" stroke="#18864b" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M380 98 H250" fill="none" stroke="#6a4c93" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="198" y="33" font-family="sans-serif" font-size="15" fill="#1769aa">closed centerline</text>
+  <text x="342" y="70" font-family="sans-serif" font-size="14" fill="#18864b">contour A</text>
+  <text x="265" y="182" font-family="sans-serif" font-size="14" fill="#6a4c93">contour B</text>
+  <text x="175" y="278" font-family="sans-serif" font-size="15" fill="#263238">The two output contours have opposite winding</text>
+</svg>

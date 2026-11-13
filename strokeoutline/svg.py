@@ -21,7 +21,29 @@ from .model import Line, Path2D, Subpath
 
 
 def path_from_svg(path: str) -> Path2D:
-    """Parse ordinary SVG line/quadratic/cubic subpaths into neutral segments."""
+    """Parse SVG path data into StrokeOutline's neutral path model.
+
+    Parameters
+    ----------
+    path : str
+        SVG path data to parse.
+
+    Returns
+    -------
+    Path2D
+        The parsed line, quadratic, and cubic subpaths.
+
+    Raises
+    ------
+    ValueError
+        If the data contains no drawable segments or an unsupported/invalid
+        path operation.
+
+    Notes
+    -----
+    This function requires FontTools from the optional ``svg`` extra. It parses
+    path geometry only; it does not render SVG/CSS strokes.
+    """
     pen = RecordingPen()
     parse_path(path, pen)
     if not pen.value:
@@ -83,7 +105,38 @@ def outline_svg_path(
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
 ) -> OutlineResult:
-    """Parse and outline an SVG path string."""
+    """Parse and expand SVG path data into closed sampled contours.
+
+    Parameters
+    ----------
+    path : str
+        SVG path data to parse.
+    width : WidthProfile
+        Constant, piecewise-linear, or callable full-diameter width profile.
+    config : OutlineConfig, optional
+        Adaptive sampling tolerances and open-path cap selection.
+
+    Returns
+    -------
+    OutlineResult
+        Closed contour tuples and aggregate bounds.
+
+    Raises
+    ------
+    ValueError
+        If SVG path data cannot be converted to the supported neutral model.
+    InvalidWidthError
+        If the width profile is invalid.
+    DegeneratePathError
+        If the parsed centerline contains degenerate geometry.
+    SubdivisionLimitError
+        If adaptive sampling cannot meet the configured tolerances.
+
+    Notes
+    -----
+    Importing this module requires FontTools from the optional ``svg`` extra.
+    The adapter parses path geometry; it is not a complete SVG/CSS stroker.
+    """
     return outline(path_from_svg(path), width, config=config)
 
 

@@ -19,7 +19,18 @@ def _point(value: Sequence[float], *, name: str) -> Point2D:
 
 @dataclass(frozen=True)
 class Line:
-    """Finite straight line segment."""
+    """Finite straight segment between two 2D endpoints.
+
+    Parameters
+    ----------
+    p0 : Point2D
+        Start coordinate.
+    p1 : Point2D
+        End coordinate.
+
+    Both endpoints must contain exactly two finite coordinates. A zero-length
+    line can be constructed, but ``outline()`` rejects it as degenerate.
+    """
 
     p0: Point2D
     p1: Point2D
@@ -46,12 +57,29 @@ def segment_end(segment: Segment) -> Point2D:
 
 @dataclass(frozen=True)
 class Subpath:
-    """One connected centerline subpath.
+    """One ordered, connected centerline subpath.
 
-    When ``closed=True`` and the final endpoint differs from the first start,
-    outlining adds the implicit closing line before sampling. This matches SVG
-    ``closePath`` behavior and the InkGrammar implementation this package was
-    extracted from.
+    Parameters
+    ----------
+    segments : Sequence[Segment]
+        Non-empty ordered sequence of ``Line``, ``QuadraticBezier``, or
+        ``CubicBezier`` segments. Adjacent endpoints must compare exactly equal.
+    closed : bool, optional
+        If true, add an implicit closing ``Line`` during outlining when the
+        final endpoint differs from the first start point.
+
+    Raises
+    ------
+    ValueError
+        If no segments are provided or adjacent segments are disconnected.
+    TypeError
+        If a segment has an unsupported type.
+
+    Notes
+    -----
+    Repeating the start point with an explicit segment is not required for a
+    closed subpath. Outlining a zero-length segment raises
+    ``DegeneratePathError``.
     """
 
     segments: Sequence[Segment]
@@ -81,7 +109,25 @@ class Subpath:
 
 @dataclass(frozen=True)
 class Path2D:
-    """A path made from one or more independent centerline subpaths."""
+    """A path containing one or more independent centerline subpaths.
+
+    Parameters
+    ----------
+    subpaths : Sequence[Subpath]
+        Non-empty sequence of subpaths to outline independently.
+
+    Raises
+    ------
+    ValueError
+        If no subpaths are provided.
+    TypeError
+        If an element is not a ``Subpath``.
+
+    Notes
+    -----
+    Each subpath receives a separate outline, and normalized width progress
+    restarts at zero for each one.
+    """
 
     subpaths: Sequence[Subpath]
 
@@ -95,7 +141,25 @@ class Path2D:
 
 
 def path_from_cubic_path(path: CubicPath, *, closed: bool = False) -> Path2D:
-    """Adapt :class:`planarcurve.CubicPath` into a strokeoutline path."""
+    """Adapt a :class:`planarcurve.CubicPath` into a ``Path2D``.
+
+    Parameters
+    ----------
+    path : planarcurve.CubicPath
+        Cubic path to adapt.
+    closed : bool, optional
+        Whether the adapted subpath should be implicitly closed during outlining.
+
+    Returns
+    -------
+    Path2D
+        A path containing one subpath with the cubic path's Bézier segments.
+
+    Raises
+    ------
+    ValueError
+        If the cubic path contains no segments.
+    """
     beziers = path.to_beziers()
     if not beziers:
         raise ValueError("cubic path requires at least one segment")
@@ -105,8 +169,30 @@ def path_from_cubic_path(path: CubicPath, *, closed: bool = False) -> Path2D:
 def path_from_polyline(points: Sequence[Sequence[float]], *, closed: bool = False) -> Path2D:
     """Build a path from ordered finite 2D points.
 
-    A closed polyline is closed implicitly, so the first point need not be repeated.
-    Repeated adjacent points are retained for ``outline()`` to reject as degenerate.
+    Parameters
+    ----------
+    points : Sequence[Sequence[float]]
+        At least two finite ``(x, y)`` coordinates, in path order.
+    closed : bool, optional
+        If true, close the path implicitly during outlining; the first point
+        need not be repeated.
+
+    Returns
+    -------
+    Path2D
+        A path containing one subpath made from consecutive line segments.
+
+    Raises
+    ------
+    ValueError
+        If fewer than two points are supplied or a point is not a finite pair.
+    TypeError
+        If point coordinates cannot be interpreted as numeric values.
+
+    Notes
+    -----
+    Repeated adjacent points are retained. Outlining a resulting zero-length
+    segment raises ``DegeneratePathError``.
     """
     finite_points = tuple(
         _point(point, name=f"points[{index}]") for index, point in enumerate(points)

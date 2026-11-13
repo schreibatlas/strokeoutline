@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 360" role="img" aria-labelledby="title desc">
+  <title id="title">Variable-width centerline</title>
+  <desc id="desc">The upper diagram shows a centerline expanding from narrow to wide and back to narrow. A lower chart shows width against normalized segment progress, labeled as full diameter.</desc>
+  <rect width="620" height="360" fill="#ffffff" />
+  <path d="M66 115 C155 75 220 73 288 82 C378 94 450 73 554 108 L554 156 C450 185 378 240 288 213 C220 188 155 175 66 153 Z" fill="#8ecae6" fill-opacity="0.45" stroke="#1976a5" stroke-width="3" />
+  <path d="M66 134 C155 125 220 130 288 148 C378 167 450 128 554 132" fill="none" stroke="#174a6e" stroke-width="4" stroke-linecap="round" />
+  <text x="65" y="45" font-family="sans-serif" font-size="17" font-weight="bold" fill="#263238">Centerline width varies along the path</text>
+  <text x="66" y="235" font-family="sans-serif" font-size="14" fill="#174a6e">narrow</text>
+  <text x="270" y="246" font-family="sans-serif" font-size="14" fill="#174a6e">wide</text>
+  <text x="512" y="217" font-family="sans-serif" font-size="14" fill="#174a6e">narrow</text>
+  <line x1="66" y1="292" x2="554" y2="292" stroke="#555" stroke-width="1.5" />
+  <line x1="66" y1="262" x2="66" y2="326" stroke="#555" stroke-width="1.5" />
+  <polyline points="66,316 164,296 359,268 554,306" fill="none" stroke="#d97706" stroke-width="4" stroke-linejoin="round" />
+  <circle cx="66" cy="316" r="4" fill="#d97706" />
+  <circle cx="164" cy="296" r="4" fill="#d97706" />
+  <circle cx="359" cy="268" r="4" fill="#d97706" />
+  <circle cx="554" cy="306" r="4" fill="#d97706" />
+  <text x="200" y="346" font-family="sans-serif" font-size="14" fill="#263238">normalized segment-index progress u</text>
+  <text x="74" y="279" font-family="sans-serif" font-size="14" fill="#263238">width (full diameter)</text>
+</svg>

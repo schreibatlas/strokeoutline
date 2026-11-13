@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 250" role="img" aria-labelledby="title desc">
+  <title id="title">Open centerline and sampled outline</title>
+  <desc id="desc">A blue curved centerline runs through a filled orange outline. Dashed guide lines show the two offset sides and rounded end caps.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6" fill="none" stroke="#1769aa" stroke-width="1.5" />
+    </marker>
+  </defs>
+  <rect width="560" height="250" fill="#ffffff" />
+  <path d="M72 175 C150 95 215 95 280 135 C350 180 405 110 488 72 C505 64 524 77 522 96 C515 165 455 198 397 210 C329 225 290 188 246 171 C199 153 146 183 86 195 C69 198 59 187 72 175 Z" fill="#f7b267" fill-opacity="0.35" stroke="#d97706" stroke-width="3" />
+  <path d="M76 185 C150 125 215 115 280 153 C350 197 410 145 500 84" fill="none" stroke="#1769aa" stroke-width="4" stroke-linecap="round" marker-end="url(#arrow)" />
+  <path d="M72 175 C150 95 215 95 280 135 C350 180 405 110 488 72" fill="none" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6 5" />
+  <path d="M86 195 C146 183 199 153 246 171 C290 188 329 225 397 210 C455 198 515 165 522 96" fill="none" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6 5" />
+  <circle cx="76" cy="185" r="5" fill="#1769aa" />
+  <text x="30" y="228" font-family="sans-serif" font-size="14" fill="#263238">start cap</text>
+  <text x="444" y="224" font-family="sans-serif" font-size="14" fill="#263238">end cap</text>
+  <text x="190" y="58" font-family="sans-serif" font-size="15" fill="#1769aa">centerline</text>
+  <text x="329" y="42" font-family="sans-serif" font-size="15" fill="#9a4d00">sampled offsets and closed contour</text>
+</svg>
