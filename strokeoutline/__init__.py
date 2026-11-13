@@ -17,13 +17,21 @@ from .core import (
     OutlineResult,
     SubdivisionLimitError,
     WidthProfile,
+    combine_outlines,
     expand_tap,
     outline,
     outline_disc,
     signed_area,
     winding,
 )
-from .model import Line, Path2D, Segment, Subpath, path_from_cubic_path
+from .model import (
+    Line,
+    Path2D,
+    Segment,
+    Subpath,
+    path_from_cubic_path,
+    path_from_polyline,
+)
 
 try:
     __version__ = version("strokeoutline")
@@ -50,10 +58,12 @@ __all__ = [
     "SubdivisionLimitError",
     "WidthProfile",
     "__version__",
+    "combine_outlines",
     "expand_tap",
     "outline",
     "outline_disc",
     "path_from_cubic_path",
+    "path_from_polyline",
     "signed_area",
     "winding",
 ]

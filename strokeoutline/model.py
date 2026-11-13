@@ -100,3 +100,20 @@ def path_from_cubic_path(path: CubicPath, *, closed: bool = False) -> Path2D:
     if not beziers:
         raise ValueError("cubic path requires at least one segment")
     return Path2D((Subpath(beziers, closed=closed),))
+
+
+def path_from_polyline(points: Sequence[Sequence[float]], *, closed: bool = False) -> Path2D:
+    """Build a path from ordered finite 2D points.
+
+    A closed polyline is closed implicitly, so the first point need not be repeated.
+    Repeated adjacent points are retained for ``outline()`` to reject as degenerate.
+    """
+    finite_points = tuple(
+        _point(point, name=f"points[{index}]") for index, point in enumerate(points)
+    )
+    if len(finite_points) < 2:
+        raise ValueError("polyline requires at least two points")
+    segments = tuple(
+        Line(start, end) for start, end in zip(finite_points, finite_points[1:], strict=False)
+    )
+    return Path2D((Subpath(segments, closed=closed),))

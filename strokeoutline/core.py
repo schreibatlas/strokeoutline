@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from math import acos, atan2, ceil, cos, degrees, hypot, isfinite, pi, sin
 from typing import Literal, TypeAlias
 
-from planarcurve import CubicBezier, CubicPath, Point2D, QuadraticBezier
+from planarcurve import CubicPath, Point2D, QuadraticBezier
 
 from .model import Line, Path2D, Segment, Subpath, path_from_cubic_path
 
@@ -46,7 +46,9 @@ class OutlineConfig:
             self.max_width_error,
             self.max_normal_angle_degrees,
         )
-        if any(not isfinite(value) or value <= 0 for value in tolerances):
+        if any(
+            isinstance(value, bool) or not isfinite(value) or value <= 0 for value in tolerances
+        ):
             raise ValueError("outline tolerances must be positive and finite")
         if self.max_normal_angle_degrees >= 180:
             raise ValueError("normal angle tolerance must be less than 180 degrees")
@@ -111,18 +113,17 @@ def _tangent(segment: Segment, t: float) -> Point2D:
 
 def _width_function(profile: WidthProfile) -> Callable[[float], float]:
     if callable(profile):
-        function = profile
+        raw = profile
     elif isinstance(profile, (int, float)) and not isinstance(profile, bool):
         constant = float(profile)
 
-        def constant_width(_u: float) -> float:
+        def raw(_u: float) -> float:
             return constant
 
-        function = constant_width
     else:
         try:
             knots = tuple((float(position), float(width)) for position, width in profile)
-        except (TypeError, ValueError) as exc:
+        except (TypeError, ValueError, OverflowError) as exc:
             raise InvalidWidthError(
                 "width must be a positive number, knot sequence, or callable"
             ) from exc
@@ -137,19 +138,25 @@ def _width_function(profile: WidthProfile) -> Callable[[float], float]:
         if any(b[0] <= a[0] for a, b in zip(knots, knots[1:], strict=False)):
             raise InvalidWidthError("width profile parameters must increase")
 
-        def function(u: float) -> float:
+        def raw(u: float) -> float:
             for (u0, w0), (u1, w1) in zip(knots, knots[1:], strict=False):
                 if u <= u1:
                     return w0 + (w1 - w0) * (u - u0) / (u1 - u0)
             return knots[-1][1]
 
-    try:
-        probes = (float(function(0.0)), float(function(0.5)), float(function(1.0)))
-    except (TypeError, ValueError) as exc:
-        raise InvalidWidthError("width callable must return numeric values") from exc
-    if any(not isfinite(value) or value <= 0 for value in probes):
-        raise InvalidWidthError("outline widths must be finite and positive")
-    return function
+    def width_at(u: float) -> float:
+        raw_value = raw(float(u))
+        if isinstance(raw_value, bool):
+            raise InvalidWidthError("outline widths must be finite and positive")
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise InvalidWidthError("width callable must return numeric values") from exc
+        if not isfinite(value) or value <= 0:
+            raise InvalidWidthError("outline widths must be finite and positive")
+        return value
+
+    return width_at
 
 
 def _unit(vector: Point2D) -> Point2D:
@@ -403,6 +410,12 @@ def _result(contours: Sequence[Contour]) -> OutlineResult:
     )
 
 
+def combine_outlines(outlines: Iterable[OutlineResult]) -> OutlineResult:
+    """Aggregate outline contours in order without performing a Boolean union."""
+    contours = tuple(contour for result in outlines for contour in result.contours)
+    return _result(contours)
+
+
 def outline(
     path: Path2D | CubicPath,
     width: WidthProfile,
@@ -431,11 +444,11 @@ def outline(
 
 def outline_disc(
     center: Point2D,
-    diameter: float,
+    diameter: WidthProfile,
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
 ) -> OutlineResult:
-    """Create a deterministic circular contour for a point stroke."""
+    """Create a circular contour, evaluating a width profile at normalized midpoint."""
     width_at = _width_function(diameter)
     diameter_value = width_at(0.5)
     radius = diameter_value / 2

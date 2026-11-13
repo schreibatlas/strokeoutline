@@ -10,8 +10,10 @@ from strokeoutline import (
     InvalidWidthError,
     Line,
     OutlineConfig,
+    OutlineResult,
     Path2D,
     Subpath,
+    combine_outlines,
     outline,
     outline_disc,
     signed_area,
@@ -102,6 +104,53 @@ def test_quadratic_and_callable_width_are_supported():
     assert_closed_and_finite(result)
 
 
+def test_callable_width_is_normalized_to_float():
+    path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
+    result = outline(path, lambda _u: "2")
+    assert result.bounds == (-1.0, -1.0, 11.0, 1.0)
+
+
+@pytest.mark.parametrize("invalid_width", [None, math.nan, math.inf, 0.0, -1.0])
+def test_callable_width_rejects_invalid_initial_values(invalid_width):
+    path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
+    with pytest.raises(InvalidWidthError):
+        outline(path, lambda _u: invalid_width)
+
+
+@pytest.mark.parametrize("invalid_width", [None, math.nan, math.inf, 0.0, -1.0])
+def test_callable_width_rejects_invalid_intermediate_values(invalid_width):
+    path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
+
+    def width(u):
+        return invalid_width if u == 0.25 else 2.0
+
+    with pytest.raises(InvalidWidthError):
+        outline(path, width)
+
+
+def test_callable_width_propagates_user_exceptions():
+    path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
+
+    def width(_u):
+        raise RuntimeError("width callback failed")
+
+    with pytest.raises(RuntimeError, match="width callback failed"):
+        outline(path, width)
+
+
+@pytest.mark.parametrize(
+    "config_kwargs",
+    [
+        {"max_centerline_error": True},
+        {"max_width_error": True},
+        {"max_normal_angle_degrees": True},
+    ],
+)
+def test_outline_config_rejects_boolean_tolerances(config_kwargs):
+    with pytest.raises(ValueError, match="positive and finite"):
+        OutlineConfig(**config_kwargs)
+
+
 def test_square_cap_matches_existing_non_round_semantics():
     path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
     result = outline(path, 2.0, config=OutlineConfig(cap="square"))
@@ -118,3 +167,32 @@ def test_planarcurve_cubic_path_is_accepted_directly():
     path = CubicPath((0, 0), (CubicSegment((3, 0), (7, 0), (10, 0)),))
     result = outline(path, 2.0)
     assert result.bounds == (-1.0, -1.0, 11.0, 1.0)
+
+
+def test_combine_outlines_preserves_contour_order_and_computes_union_bounds():
+    first = OutlineResult(
+        (
+            ((0.0, 0.0), (1.0, 0.0), (0.0, 0.0)),
+            ((0.0, 0.0), (0.0, 2.0), (0.0, 0.0)),
+        ),
+        (0.0, 0.0, 1.0, 2.0),
+    )
+    second = OutlineResult(
+        (((-3.0, 4.0), (-2.0, 4.0), (-3.0, 4.0)),),
+        (-3.0, 4.0, -2.0, 4.0),
+    )
+
+    combined = combine_outlines(iter((first, second)))
+
+    assert combined.contours == first.contours + second.contours
+    assert combined.bounds == (-3.0, 0.0, 1.0, 4.0)
+
+
+def test_combine_outlines_empty_input_returns_empty_result():
+    assert combine_outlines(()) == OutlineResult((), None)
+
+
+def test_outline_disc_evaluates_width_profiles_at_midpoint():
+    profile = [(0.0, 2.0), (0.5, 8.0), (1.0, 4.0)]
+
+    assert outline_disc((4, -3), profile) == outline_disc((4, -3), 8.0)

@@ -2,6 +2,11 @@
 
 `strokeoutline` expands 2D centerlines into deterministic filled contours with constant or variable stroke width. It is the reusable geometry extracted from InkGrammar's stroke outlining engine, without glyph, shaping, font, OCR, or handwriting-model responsibilities.
 
+
+## Why use this?
+
+Use StrokeOutline when a line-like feature is represented by a centerline but a filled contour is needed. It supports vector brushes, stylus-pressure paths, centerline fonts, skeleton thickening, and corridor visualization without requiring handwriting models or an existing polygon.
+
 ## Status
 
 MVP / extraction release. The implementation intentionally preserves the current InkGrammar geometry before attempting robustness improvements.
@@ -60,6 +65,12 @@ u = (segment_index + local_segment_parameter) / segment_count
 
 It restarts at `0` for each independent subpath. This is deliberate and should not be changed silently in a compatible release.
 
+
+
+## Polyline and composition helpers
+
+Use `path_from_polyline(points, closed=False)` to convert ordered finite 2D points into a `Path2D`. A closed polyline is implicitly connected to its first point. `combine_outlines(results)` concatenates contours in input order and recomputes aggregate bounds. It does not perform Boolean union or merge touching contours.
+
 ## SVG compatibility
 
 ```python
@@ -79,6 +90,12 @@ The SVG adapter uses FontTools only when imported. The geometric core does not i
 - output is deterministic for identical input/configuration;
 - difficult self-intersections, sharp cusps, very large widths relative to curvature, and degenerate tangents are not yet a robust Boolean-offset problem solver.
 
+
+
+### Not a complete SVG/CSS stroker
+
+The optional SVG adapter parses SVG path geometry, but StrokeOutline does not implement complete SVG/CSS stroke joins or Boolean cleanup. It provides deterministic sampled centerline expansion with controlled tolerances, not a robust polygon offset solver for every topology.
+
 ## Versioning
 
 Versions are derived dynamically from Git tags with `setuptools_scm`. Release tags should use `vX.Y.Z`, for example `v0.1.0`.
@@ -94,7 +111,12 @@ python -m build
 python -m twine check dist/*
 ```
 
+## Examples
+
+See [`examples/README.md`](examples/README.md) for the five runnable, domain-neutral examples. They can be executed individually with `python examples/<script>.py`; the test suite runs all five.
+
 ## Extraction boundary
+
 
 The package owns centerline-to-contour geometry and point-disc expansion. InkGrammar should retain `ShapedText` traversal as an adapter that calls this package. The MVP includes an SVG compatibility adapter; a future public parsed-segment API in `planarcurve` can become the single SVG parsing owner without changing `strokeoutline`'s core API.
 
