@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=77", "wheel", "setuptools_scm[toml]>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "strokeoutline"
+description = "Deterministic variable-width stroke expansion from 2D centerlines to filled contours."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{name = "Holger Nahrstaedt"}]
+dynamic = ["version"]
+keywords = [
+  "geometry",
+  "stroke",
+  "outline",
+  "offset-curve",
+  "bezier",
+  "vector-graphics",
+  "svg",
+]
+dependencies = [
+  "planarcurve>=0.1,<0.2",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Graphics",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/schreibatlas/strokeoutline"
+Repository = "https://github.com/schreibatlas/strokeoutline"
+Issues = "https://github.com/schreibatlas/strokeoutline/issues"
+Changelog = "https://github.com/schreibatlas/strokeoutline/releases"
+
+[project.optional-dependencies]
+svg = ["fonttools>=4.55"]
+dev = [
+  "build>=1.2",
+  "fonttools>=4.55",
+  "pytest>=8",
+  "ruff>=0.8",
+  "twine>=5",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["strokeoutline*"]
+
+[tool.setuptools.package-data]
+strokeoutline = ["py.typed"]
+
+[tool.setuptools_scm]
+write_to = "strokeoutline/_version.py"
+fallback_version = "0.1.0.dev0"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
