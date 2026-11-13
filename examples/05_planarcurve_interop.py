@@ -1,4 +1,5 @@
 from planarcurve import CubicPath, CubicSegment
+
 from strokeoutline import outline
 
 centerline = CubicPath(
