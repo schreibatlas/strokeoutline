@@ -1,12 +1,16 @@
 # Core API
 
-The names below are re-exported from the top-level `strokeoutline` package.
+The primary API is re-exported from `strokeoutline`. The optional parser is in `strokeoutline.svg`.
 
-## Types and configuration
+## Public type aliases
 
-`WidthProfile` is a positive constant, a sequence of `(u, width)` knots, or a callable from normalized progress to width. Knot positions span `0..1` and are strictly increasing. Width progress is based on segment index, not arc length; see [width profiles](../width-profiles.md).
+- `WidthProfile`: a positive real scalar, an iterable of `(u, width)` real-valued knots, or a callable from normalized progress to width. Knot positions span `0..1`, increase strictly, and have positive finite widths. Boolean values are rejected.
+- `Contour`: a tuple of 2D points.
+- `CapStyle`: `"round"`, `"square"`, or `"butt"`.
+- `JoinStyle`: `"legacy"`, `"miter"`, `"bevel"`, or `"round"`.
+- `WidthParameterization`: `"segment"` or `"arclength"`.
 
-`Contour` is a tuple of 2D points. `CapStyle` is the literal choice `"round"` or `"square"`, used for open paths.
+Width progress defaults to segment-index mapping for compatibility. Arc-length mapping is opt-in. See [width profiles](../width-profiles.md).
 
 ```{autodata} strokeoutline.DEFAULT_OUTLINE_CONFIG
 
@@ -36,6 +40,8 @@ The names below are re-exported from the top-level `strokeoutline` package.
 
 ```
 
+`combine_outlines()` preserves contour order and recomputes bounds. It does not perform a Boolean union.
+
 ## Contour helpers
 
 ```{autofunction} strokeoutline.signed_area
@@ -64,14 +70,14 @@ The names below are re-exported from the top-level `strokeoutline` package.
 
 ```
 
-| Exception               | Meaning                                           | Typical cause                                                              |
-| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| `OutlineError`          | Base outlining failure                            | Base class for package geometry failures                                   |
-| `InvalidWidthError`     | Invalid width specification or value              | Non-positive/non-finite width, malformed knots, or invalid callable result |
-| `DegeneratePathError`   | Degenerate centerline geometry                    | Zero-length segment or tangent                                             |
-| `SubdivisionLimitError` | Adaptive subdivision could not satisfy tolerances | Tolerances or geometry/profile too difficult within the configured depth   |
+| Exception | Meaning | Typical cause |
+| --- | --- | --- |
+| `OutlineError` | Base outlining failure | Base class for package geometry failures |
+| `InvalidWidthError` | Invalid width specification or value | Non-positive or non-finite width, malformed knots, or invalid callable result |
+| `DegeneratePathError` | Degenerate centerline geometry | Zero-length sampled segment or tangent |
+| `SubdivisionLimitError` | Adaptive subdivision could not satisfy tolerances | Depth exhaustion, floating-point no-progress, or geometry/profile too difficult at the configured tolerances |
 
-Model constructors may separately raise ordinary `ValueError` or `TypeError` for invalid arguments.
+Path-model constructors may separately raise ordinary `ValueError` or `TypeError` for invalid arguments.
 
 ## Version
 

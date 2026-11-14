@@ -1,6 +1,6 @@
 # Path model
 
-StrokeOutline uses a neutral path model built from ordered 2D segments.
+StrokeOutline uses a neutral path model built from ordered 2D segments. StrokeOutline's own model types are immutable dataclasses. `Line` endpoints are normalized to finite float pairs; `OutlineResult` also normalizes contour points.
 
 ## `Line`
 
@@ -8,11 +8,13 @@ StrokeOutline uses a neutral path model built from ordered 2D segments.
 Line(p0, p1)
 ```
 
-Both endpoints are finite 2D coordinates. `Line` is defined by StrokeOutline.
+Both endpoints accept an iterable containing exactly two finite numeric coordinates. Boolean coordinates, strings, non-finite values, and malformed points are rejected with `ValueError`. A zero-length `Line` can be constructed, but `outline()` rejects the degenerate geometry.
+
+`Line` is defined by StrokeOutline. `QuadraticBezier`, `CubicBezier`, `Point2D`, `CubicPath`, and `Segment` originate from PlanarCurve; some are re-exported by StrokeOutline for convenient construction and annotations.
 
 ## Bézier segments
 
-`QuadraticBezier` and `CubicBezier` are types from `planarcurve`. They can be used directly as segments in a `Subpath`, alongside `Line`.
+`QuadraticBezier` and `CubicBezier` from PlanarCurve can be used directly in a `Subpath`, alongside `Line`. PlanarCurve remains the semantic owner of these segment types.
 
 ## `Subpath`
 
@@ -20,9 +22,9 @@ Both endpoints are finite 2D coordinates. `Line` is defined by StrokeOutline.
 Subpath(segments, closed=False)
 ```
 
-A subpath requires at least one segment. Its segment sequence must contain `Line`, `QuadraticBezier`, or `CubicBezier` objects connected in order. Connectivity currently uses exact endpoint equality.
+A subpath requires at least one `Line`, `QuadraticBezier`, or `CubicBezier` segment. Adjacent endpoints must compare exactly equal. When `closed=True`, an implicit closing `Line` is added during outlining if the last endpoint differs from the first start point. A repeated explicit closing segment is not required.
 
-When `closed=True`, an implicit closing `Line` is added if the last endpoint differs from the first start point. A repeated explicit closing segment is not required. Closing a centerline produces two output contours; see [closed paths](closed-paths.md).
+Outlining a closed centerline produces two explicitly closed contours with opposite winding. The implicit closing segment participates in width progress. See [closed paths](closed-paths.md).
 
 ## `Path2D`
 
@@ -30,7 +32,7 @@ When `closed=True`, an implicit closing `Line` is added if the last endpoint dif
 Path2D(subpaths)
 ```
 
-A `Path2D` contains one or more independent subpaths. Each subpath is outlined independently, and normalized width progress restarts from zero for each one.
+A `Path2D` contains one or more independent subpaths. Each subpath is outlined independently, and normalized width progress restarts at zero for each one. Constructors normalize the provided collections to tuples.
 
 ## `path_from_polyline()`
 
@@ -47,4 +49,4 @@ At least two finite 2D points are required. `closed=True` adds an implicit closi
 
 ## `path_from_cubic_path()`
 
-Use `path_from_cubic_path()` to adapt a `planarcurve.CubicPath` to `Path2D`. For ordinary outlining, adaptation is optional because `outline()` accepts `CubicPath` directly.
+Use `path_from_cubic_path()` to adapt a `planarcurve.CubicPath` to `Path2D`. Adaptation is optional because `outline()` accepts `CubicPath` directly.

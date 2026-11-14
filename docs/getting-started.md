@@ -78,6 +78,24 @@ path = Path2D(
 result = outline(path, 4.0)
 ```
 
+## Opt into alternative behavior
+
+Compatibility defaults retain the sampled `legacy` join, round caps, and segment-index width progress. Select alternatives explicitly with `OutlineConfig`:
+
+```python
+from strokeoutline import OutlineConfig, outline
+
+config = OutlineConfig(
+    cap="butt",
+    join="miter",
+    miter_limit=3.0,
+    width_parameterization="arclength",
+)
+result = outline(path, 4.0, config=config)
+```
+
+See [configuration](configuration.md) for all settings and [width profiles](width-profiles.md) for callable and knot semantics.
+
 ## Next steps
 
 - Learn the [path model](path-model.md) and [width profiles](width-profiles.md).

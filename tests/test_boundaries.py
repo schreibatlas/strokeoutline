@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import strokeoutline
+from strokeoutline._version import __version__ as generated_version
 
 
 def test_package_does_not_import_inkgrammar():
@@ -15,6 +16,7 @@ def test_package_does_not_import_inkgrammar():
 
 def test_source_checkout_has_version_string():
     assert isinstance(strokeoutline.__version__, str)
+    assert strokeoutline.__version__ == generated_version
     assert strokeoutline.__version__
 
 

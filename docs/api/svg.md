@@ -2,7 +2,7 @@
 
 > This module requires the optional `svg` extra and FontTools. Install it with `python -m pip install 'strokeoutline[svg]'`.
 
-The adapter returns StrokeOutline's neutral path model and outline result. It does not implement complete SVG/CSS stroke rendering.
+The adapter parses SVG path geometry into StrokeOutline's neutral path model, then returns the ordinary immutable `OutlineResult`. It does not render SVG or implement complete SVG/CSS stroke behavior. Regression-covered forms include relative coordinates, horizontal/vertical lines, smooth cubic/quadratic commands, arcs converted to cubic segments, close paths, and multiple subpaths. This is not an exhaustive command compatibility matrix.
 
 ```{autofunction} strokeoutline.svg.path_from_svg
 

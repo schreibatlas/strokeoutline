@@ -2,19 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from math import isfinite
 from typing import TypeAlias
 
 from planarcurve import CubicBezier, CubicPath, Point2D, QuadraticBezier
 
-
-def _point(value: Sequence[float], *, name: str) -> Point2D:
-    if len(value) != 2:
-        raise ValueError(f"{name} must have exactly two coordinates")
-    point = (float(value[0]), float(value[1]))
-    if not all(isfinite(component) for component in point):
-        raise ValueError(f"{name} must contain finite coordinates")
-    return point
+from ._validation import normalize_point
 
 
 @dataclass(frozen=True)
@@ -36,8 +28,8 @@ class Line:
     p1: Point2D
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "p0", _point(self.p0, name="p0"))
-        object.__setattr__(self, "p1", _point(self.p1, name="p1"))
+        object.__setattr__(self, "p0", normalize_point(self.p0, name="p0"))
+        object.__setattr__(self, "p1", normalize_point(self.p1, name="p1"))
 
 
 Segment: TypeAlias = Line | QuadraticBezier | CubicBezier
@@ -186,8 +178,6 @@ def path_from_polyline(points: Sequence[Sequence[float]], *, closed: bool = Fals
     ------
     ValueError
         If fewer than two points are supplied or a point is not a finite pair.
-    TypeError
-        If point coordinates cannot be interpreted as numeric values.
 
     Notes
     -----
@@ -195,7 +185,7 @@ def path_from_polyline(points: Sequence[Sequence[float]], *, closed: bool = Fals
     segment raises ``DegeneratePathError``.
     """
     finite_points = tuple(
-        _point(point, name=f"points[{index}]") for index, point in enumerate(points)
+        normalize_point(point, name=f"points[{index}]") for index, point in enumerate(points)
     )
     if len(finite_points) < 2:
         raise ValueError("polyline requires at least two points")

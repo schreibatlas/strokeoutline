@@ -19,7 +19,6 @@ VALID_TARGETS = {
     "html",
     "dirhtml",
     "latex",
-    "latexpdf",
     "text",
     "man",
     "changes",
@@ -72,7 +71,10 @@ def main() -> int:
         print(f"Building {output_format} documentation...")
         run_sphinx(output_format)
 
-    print(f"Build finished. Documentation is in {BUILD_DIR / target}")
+    if target == "all":
+        print(f"Build finished. Documentation outputs are in {BUILD_DIR}")
+    else:
+        print(f"Build finished. Documentation is in {BUILD_DIR / target}")
     return 0
 
 

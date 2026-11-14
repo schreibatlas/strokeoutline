@@ -38,3 +38,8 @@ python docs/make.py help
 ```
 
 `linkcheck` is useful as a manual or release check. It is not an ordinary CI gate because external network reliability can make it flaky.
+
+
+## PyPI trusted publishing
+
+The release workflow uses GitHub's OIDC identity through the PyPA publish action and does not use a PyPI API token. Before the next release, the repository owner must register this repository and `.github/workflows/publish.yml` as a [PyPI trusted publisher](https://docs.pypi.org/trusted-publishers/), and configure the matching GitHub `pypi` environment. This external PyPI and GitHub configuration is a release prerequisite and is not performed by this code change.

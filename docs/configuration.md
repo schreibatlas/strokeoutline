@@ -1,6 +1,6 @@
 # Configuration
 
-`OutlineConfig` controls adaptive sampling and open-path caps. The defaults are:
+`OutlineConfig` controls adaptive sampling, caps, joins, and normalized width progress. Defaults are:
 
 ```python
 OutlineConfig(
@@ -8,31 +8,55 @@ OutlineConfig(
     max_width_error=0.25,
     max_normal_angle_degrees=3.0,
     cap="round",
+    join="legacy",
+    miter_limit=4.0,
+    width_parameterization="segment",
     max_subdivision_depth=18,
 )
 ```
 
-## `max_centerline_error`
+All tolerances and `miter_limit` must be positive and finite. `max_normal_angle_degrees` must also be less than 180. `max_subdivision_depth` is a positive integer.
 
-Maximum tolerated geometric deviation from a straight chord during adaptive flattening, in the same units as the input coordinates. Smaller values generally produce more samples.
+## Sampling tolerances
 
-## `max_width_error`
+### `max_centerline_error`
 
-Maximum tolerated deviation between the width profile and linear interpolation over a candidate sampling interval, in coordinate/width units. This matters for nonlinear callables and changes in piecewise profiles.
+Maximum tolerated geometric deviation from a straight chord, in input coordinate units. Smaller values generally produce more samples. This tolerance also controls sampled cap and round-join arcs.
 
-## `max_normal_angle_degrees`
+### `max_width_error`
 
-Maximum accepted tangent direction change over a sampling interval, in degrees. Smaller values increase sampling around curvature. The value must be positive and less than 180.
+Maximum tolerated deviation between width progress and linear interpolation over a candidate interval, in width units. Piecewise-linear knot intervals are split at their exact knots; this tolerance governs additional adaptive sampling within an interval.
+
+### `max_normal_angle_degrees`
+
+Maximum accepted tangent direction change over a sampling interval. Smaller values increase sampling around curvature.
+
+### `max_subdivision_depth`
+
+Maximum adaptive subdivision depth for each interval. The implementation uses an explicit stack, not Python recursion. If the tolerances cannot be met by this depth, or floating-point subdivision stops making progress, outlining raises `SubdivisionLimitError`.
 
 ## `cap`
 
-Choose `"round"` or `"square"` for open paths. This setting has no effect on closed centerlines. StrokeOutline exposes no public CSS-style join selection.
-Round caps are semicircular. Square caps extend the outline by half the endpoint width along the centerline tangent.
+Choose `"round"`, `"square"`, or `"butt"` for open paths. The setting has no effect on closed centerlines.
 
-## `max_subdivision_depth`
+- Round caps are semicircular around the endpoint.
+- Square caps extend by half the endpoint width along the endpoint tangent.
+- Butt caps stop at the centerline endpoint plane.
 
-Safety limit for recursive adaptive subdivision. It must be a positive integer. If the requested tolerances cannot be met by this depth, outlining raises `SubdivisionLimitError`.
+Endpoint tangents use analytic segment derivatives where available, with a secant fallback for a degenerate endpoint derivative.
+
+## `join` and `miter_limit`
+
+`join="legacy"` is the compatibility default. It retains the extracted sampled bisector algorithm and its clamps. It is not a standard SVG/CSS miter or bevel join.
+
+Opt into `"miter"`, `"bevel"`, or `"round"` to select explicit sampled joins. `miter_limit` is the maximum ratio of miter length to half-width. A miter that exceeds the limit falls back to bevel geometry. Join styles do not imply Boolean cleanup or robust handling of arbitrary self-intersections.
+
+## `width_parameterization`
+
+`"segment"` is the compatibility default. Each segment receives an equal share of normalized width progress. `"arclength"` maps progress to cumulative physical path length, normalized over the subpath; Bézier lengths are numerically integrated. For a closed subpath, its implicit closing segment participates in either mode.
+
+See [width profiles](width-profiles.md) for the mapping formulas and examples.
 
 ## Tuning guidance
 
-Retain the defaults unless the application has a reason to tune them. Decreasing tolerances generally increases geometric accuracy, contour vertex count, and work. Do not assume a particular vertex count or complexity for a given curve.
+Retain the defaults unless the application has a reason to tune them. Decreasing tolerances generally increases accuracy, contour vertices, and work. Do not rely on a particular adaptive vertex count.

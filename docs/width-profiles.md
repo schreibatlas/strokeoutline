@@ -1,16 +1,20 @@
 # Width profiles
 
-## Constant width
+Width is the full stroke diameter. The local offset on each side is half the requested width.
+
+## Supported profiles
+
+### Constant width
 
 ```python
 result = outline(path, 4.0)
 ```
 
-> **Width is the full stroke diameter, not the radius.** The offset on each side is based on half the requested width.
+A positive `numbers.Real` scalar is accepted; booleans are not widths.
 
-## Piecewise-linear width
+### Piecewise-linear width
 
-A sequence of `(u, width)` knots defines linear interpolation between widths:
+A knot iterable defines linear interpolation between `(u, width)` pairs:
 
 ```python
 profile = [
@@ -22,42 +26,42 @@ profile = [
 result = outline(path, profile)
 ```
 
-```{figure} _static/variable-width.svg
-:alt: A centerline expanded from narrow to wide and back to narrow, with a chart of full diameter against normalized segment-index progress.
+A profile requires at least two knots, begins at `0`, ends at `1`, and has strictly increasing finite positions. Widths must be finite and positive. Every interior knot is sampled exactly, including knots that fall inside a segment.
 
-A pressure-like width profile over normalized segment-index progress.
+```{figure} _static/variable-width.svg
+:alt: A centerline expanded from narrow to wide and back to narrow, with full diameter against normalized progress.
+
+A pressure-like width profile over normalized progress.
 ```
 
-A profile requires at least two knots, starts at position `0`, ends at `1`, and has strictly increasing positions. Every position and width must be finite, and every width must be positive.
-
-## Callable width
-
-A callable receives normalized progress and returns a width:
+### Callable width
 
 ```python
 result = outline(path, lambda u: 3.0 + 7.0 * u)
 ```
 
-The return value is converted to `float` when possible and must be finite and positive. Adaptive sampling may evaluate the callable multiple times, so it should be deterministic and safe to call repeatedly.
+The callable must return a finite positive numeric width. Successful results are normalized and memoized for each distinct progress value during one `outline()` call. The callback should be deterministic and pure for a given `u`, and sufficiently continuous for the configured `max_width_error` to be satisfiable. A discontinuous or too rapidly changing callback may raise `SubdivisionLimitError`.
 
-## Normalized progress is based on segment index
+## Segment-index progress, the compatibility default
 
-Width progress uses this formula:
+For `width_parameterization="segment"`, progress follows:
 
 ```text
 u = (segment_index + local_segment_parameter) / segment_count
 ```
 
-For a two-segment subpath, segment 0 spans approximately `u = 0.0..0.5` and segment 1 spans `u = 0.5..1.0`. A very short segment and a very long segment receive equal normalized spans. Splitting one geometric segment into two changes where a profile is applied.
+For a two-segment subpath, the first segment spans `u=0..0.5` and the second spans `u=0.5..1`. A short and a long segment receive equal normalized spans. Splitting a segment changes where the profile applies. This extracted behavior remains the default.
 
-This is preserved compatibility behavior. It is **not** parameterized by physical arc length.
+The implicit closing segment of a closed subpath is inserted before sampling and participates in the legacy segment count. Progress restarts at zero for every independent subpath.
 
-## Independent subpaths
+## Arc-length progress
 
-Progress restarts at zero for each `Subpath`, including when a `Path2D` contains multiple strokes.
+Select `OutlineConfig(width_parameterization="arclength")` to use cumulative physical path length normalized to `0..1` for each subpath. Line lengths are direct; Bézier segment lengths are numerically integrated. This mode is opt-in and does not change compatibility behavior.
 
-## `outline_disc()`
+For two unequal segments, a knot at `u=0.5` lies halfway along the combined physical path in arc-length mode. In segment mode it lies at the boundary between the segments, regardless of their lengths.
 
-A point has no path progression. `outline_disc(center, width)` therefore evaluates a variable width profile at `u == 0.5` to choose the disc diameter.
+## `outline_disc()` and aliases
 
-See [limitations](limitations.md) for cases where variable-width offsets need special care.
+A point has no path progression, so `outline_disc(center, diameter)` evaluates a supplied width profile at `u == 0.5`. `expand_tap` remains a compatibility alias for `outline_disc`; new code should use the canonical name.
+
+See [limitations](limitations.md) for sampled geometry and offset-topology caveats.

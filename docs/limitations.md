@@ -1,27 +1,29 @@
 # Limitations and non-goals
 
-StrokeOutline is a sampled centerline expander. It is useful for many ordinary paths, but it is not a general-purpose offset or polygon-cleanup solver.
+StrokeOutline is a sampled centerline expander. It is useful for ordinary strokes, but is not a general-purpose analytic offset or polygon-cleanup solver.
 
-## Not a complete SVG/CSS stroker
+## Joins, caps, and SVG/CSS semantics
 
-The package does not expose complete SVG/CSS join and stroke semantics. It currently offers only round or square cap selection for open paths. SVG path parsing is an optional adapter, not SVG rendering.
+Open caps can be round, square, or butt. The default join, `legacy`, preserves a sampled bisector construction with hidden compatibility clamps. It is not a standard miter or bevel join. Explicit sampled `miter`, `bevel`, and `round` joins are available, with an over-limit miter falling back to bevel geometry. These choices do not provide complete SVG/CSS stroke semantics.
+
+The optional SVG adapter parses path geometry through FontTools. It does not render SVG, styles, transforms, or CSS strokes.
 
 ## No robust Boolean cleanup
 
-Generated contours are not guaranteed to be free of arbitrary self-intersections. StrokeOutline does not perform Boolean union or resolve topology changes. Use particular care with sharp cusps, self-intersecting centerlines, large widths relative to local curvature, degenerate or near-degenerate tangents, and offsets that overlap themselves.
+Generated contours are not guaranteed to be free of arbitrary self-intersections. StrokeOutline does not perform Boolean union or resolve topology changes. Use care with sharp cusps, self-intersecting centerlines, large widths relative to local curvature, and offsets that overlap themselves.
 
-## Width progress is not arc length
+## Width progress
 
-Variable width is parameterized by segment index and local segment parameter, not physical distance along the path. Progress restarts for every independent subpath. See [width profiles](width-profiles.md).
+The compatibility default distributes width progress evenly by segment index, not physical distance. Progress restarts for each independent subpath and includes the implicit closing segment of a closed path. Opt into `width_parameterization="arclength"` for normalized physical path-length progress. See [width profiles](width-profiles.md).
 
-## Degenerate geometry
+## Numerical geometry
 
-Zero-length segments and zero-length tangents are rejected during outlining with `DegeneratePathError`. Path model constructors may also raise ordinary `ValueError` or `TypeError` for invalid input; not every constructor error is wrapped in the outlining exception hierarchy.
+Coordinates and widths may use any consistent units; there is no fixed absolute geometry epsilon. Exact zero-length segments or tangent directions are rejected. Finite precision still limits features that are much smaller than the local floating-point spacing, especially after large coordinate translations. Near reversals and endpoint cusps can be ill-conditioned even when coordinates are finite.
 
-## Adaptive subdivision limit
+## Adaptive subdivision
 
-If adaptive sampling cannot satisfy its tolerances before `max_subdivision_depth`, outlining raises `SubdivisionLimitError`. Relaxing tolerances may permit the operation, at the cost of a less finely sampled result.
+Sampling may fail for discontinuous or extremely demanding profiles. If tolerances cannot be met within `max_subdivision_depth`, or a floating-point midpoint no longer lies strictly inside its interval, outlining raises `SubdivisionLimitError`. The implementation is iterative and does not leak Python `RecursionError` for large accepted depth settings.
 
-## Sampled output, not an analytic offset
+## Sampled output
 
-The result is a deterministic sampled contour. It is not an exact symbolic offset curve for a line or Bézier path.
+The result is a deterministic sampled contour, not an exact symbolic offset curve. Tolerances constrain the sampling checks; they do not guarantee simple polygon topology or Boolean-clean output.

@@ -15,7 +15,7 @@ for contour in result.contours:
     print(signed_area(contour), winding(contour))
 ```
 
-A closed centerline returns two explicitly closed contours with opposite winding. The cap setting is irrelevant. Do not rely on a particular returned contour index being the geometric outer contour.
+A closed centerline returns two explicitly closed contours with opposite winding. The cap setting is irrelevant. Do not rely on a particular returned contour index being the geometric outer contour. Its implicit closing segment participates in width progress; segment-index progress remains the default, and arc-length progress is opt-in.
 
 ```{figure} _static/closed-centerline.svg
 :alt: A closed rectangular centerline expanded into two contours with opposite winding directions.

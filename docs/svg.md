@@ -1,6 +1,6 @@
 # SVG path adapter
 
-The optional SVG adapter parses path data into StrokeOutline's neutral path model. It is not required for core geometry.
+The optional SVG adapter parses path data into StrokeOutline's neutral path model. It is not required for core geometry and is not an SVG renderer.
 
 ## Installation
 
@@ -29,7 +29,9 @@ path = path_from_svg("M 0 0 L 10 0")
 result = outline(path, 2.0)
 ```
 
-The adapter supports SVG path operations that it can convert to the neutral line, quadratic, and cubic segment model. This is not a promise of complete SVG/CSS stroke rendering or an exhaustive command compatibility matrix.
+The adapter uses FontTools to normalize supported path commands into line, quadratic, and cubic segments. Regression-covered forms include relative coordinates, horizontal and vertical lines, smooth cubic and quadratic commands, arcs converted to cubic segments, close paths, and multiple subpaths. Unsupported operations or data that cannot be represented by the neutral model raise `ValueError`.
+
+This tested set is not an exhaustive SVG compatibility matrix. The adapter parses geometry only. It does not implement SVG transforms, rendering, styles, complete CSS stroke semantics, or polygon cleanup.
 
 ## Dependency boundary
 

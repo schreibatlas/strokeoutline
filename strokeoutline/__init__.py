@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from importlib.metadata import PackageNotFoundError, version
-
 from planarcurve import CubicBezier, CubicPath, Point2D, QuadraticBezier
 
 from .core import (
@@ -12,10 +10,12 @@ from .core import (
     Contour,
     DegeneratePathError,
     InvalidWidthError,
+    JoinStyle,
     OutlineConfig,
     OutlineError,
     OutlineResult,
     SubdivisionLimitError,
+    WidthParameterization,
     WidthProfile,
     combine_outlines,
     expand_tap,
@@ -34,9 +34,9 @@ from .model import (
 )
 
 try:
-    __version__ = version("strokeoutline")
-except PackageNotFoundError:
-    __version__ = "0.0.0+unknown"
+    from ._version import __version__
+except ImportError:
+    __version__ = "0+unknown"
 
 __all__ = [
     "DEFAULT_OUTLINE_CONFIG",
@@ -46,6 +46,7 @@ __all__ = [
     "CubicPath",
     "DegeneratePathError",
     "InvalidWidthError",
+    "JoinStyle",
     "Line",
     "OutlineConfig",
     "OutlineError",
@@ -54,8 +55,9 @@ __all__ = [
     "Point2D",
     "QuadraticBezier",
     "Segment",
-    "Subpath",
     "SubdivisionLimitError",
+    "Subpath",
+    "WidthParameterization",
     "WidthProfile",
     "__version__",
     "combine_outlines",
