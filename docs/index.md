@@ -48,5 +48,6 @@ examples
 limitations
 integration
 development
+changelog
 api/index
 ```
