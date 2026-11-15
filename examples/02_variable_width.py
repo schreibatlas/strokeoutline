@@ -4,9 +4,12 @@ from strokeoutline import Line, OutlineConfig, Path2D, Subpath, outline
 
 
 def main():
-    path = Path2D((Subpath((Line((0, 0), (100, 0)),)),))
+    path = Path2D((Subpath((Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))),))
     profile = [(0.0, 2.0), (0.3, 4.0), (0.7, 16.0), (1.0, 6.0)]
-    result = outline(path, profile, config=OutlineConfig(max_width_error=0.05))
+    config = OutlineConfig(max_width_error=0.05)
+    result = outline(path, profile, config=config, width_parameterization="arclength")
+    segment_progress = outline(path, profile, config=config)
+    assert result != segment_progress
     constant_width = outline(path, 2.0)
 
     assert len(result.contours) == 1

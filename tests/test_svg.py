@@ -4,7 +4,15 @@ import math
 
 import pytest
 
-from strokeoutline import CubicBezier, Line, OutlineConfig, QuadraticBezier, signed_area
+from strokeoutline import (
+    CubicBezier,
+    Line,
+    OutlineConfig,
+    QuadraticBezier,
+    WidthParameterization,
+    outline,
+    signed_area,
+)
 from strokeoutline.svg import outline_svg_path, path_from_svg
 
 
@@ -63,6 +71,25 @@ def test_svg_arc_and_close_commands_produce_supported_geometry():
     assert closed_path.subpaths[0].closed
     assert result.bounds is not None
     assert all(math.isfinite(value) for value in result.bounds)
+
+
+def test_svg_adapter_forwards_width_parameterization():
+    path = "M 0 0 L 10 0 L 100 0"
+    profile = ((0.0, 2.0), (0.5, 10.0), (1.0, 2.0))
+    mode: WidthParameterization = "arclength"
+
+    legacy = outline_svg_path(path, profile)
+    arclength = outline_svg_path(path, profile, width_parameterization=mode)
+    expected = outline(path_from_svg(path), profile, width_parameterization=mode)
+
+    assert arclength == expected
+    assert arclength != legacy
+    assert (
+        outline_svg_path(path, profile, config=OutlineConfig(width_parameterization="arclength"))
+        == arclength
+    )
+    with pytest.raises(ValueError, match="width_parameterization"):
+        outline_svg_path(path, profile, width_parameterization="invalid")
 
 
 def test_svg_move_only_subpath_is_rejected():

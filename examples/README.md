@@ -23,7 +23,7 @@ python -m pip install 'strokeoutline[svg]'
 | Script | Demonstrates | Optional dependency | Expected invariant |
 | --- | --- | --- | --- |
 | `01_basic_centerline.py` | Line, quadratic, and cubic segments in one subpath | None | One finite, explicitly closed outline contour |
-| `02_variable_width.py` | Piecewise width profile and adaptive sampling | None | The wider profile region expands the contour bounds |
+| `02_variable_width.py` | Piecewise width profile, adaptive sampling, and arc-length progress across unequal segments | None | The wider profile region expands the contour bounds independently of segment lengths |
 | `03_svg_adapter.py` | Multiple SVG subpaths | FontTools via `strokeoutline[svg]` | Two source subpaths produce two independent outline contours |
 | `04_closed_centerline.py` | Implicit closure and closed-centerline winding | None | Two closed output contours have opposite winding |
 | `05_planarcurve_interop.py` | Direct `planarcurve.CubicPath` input and callable width | None | Direct input matches the equivalent adapted `Path2D` |

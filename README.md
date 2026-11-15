@@ -41,7 +41,11 @@ The compatibility default is segment-index progress, restarted for each independ
 u = (segment_index + local_segment_parameter) / segment_count
 ```
 
-It is not physical distance. An implicit closing segment participates in the segment count of a closed subpath. To opt into normalized physical arc length, set `OutlineConfig(width_parameterization="arclength")`.
+It is not physical distance. An implicit closing segment participates in the segment count of a closed subpath. To opt into normalized physical arc length, pass `width_parameterization="arclength"` to `outline()` or `outline_svg_path()`. The existing `OutlineConfig(width_parameterization="arclength")` option remains supported.
+
+```python
+result = outline(path, [(0.0, 2.0), (1.0, 6.0)], width_parameterization="arclength")
+```
 
 `outline_disc(center, diameter)` evaluates a width profile at `u == 0.5`, since a point has no path progression.
 

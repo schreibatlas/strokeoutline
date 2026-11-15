@@ -56,8 +56,11 @@ The implicit closing segment of a closed subpath is inserted before sampling and
 
 ## Arc-length progress
 
-Select `OutlineConfig(width_parameterization="arclength")` to use cumulative physical path length normalized to `0..1` for each subpath. Line lengths are direct; Bézier segment lengths are numerically integrated. This mode is opt-in and does not change compatibility behavior.
+Use `outline(path, profile, width_parameterization="arclength")` or `OutlineConfig(width_parameterization="arclength")` to use cumulative physical path length normalized to `0..1` for each subpath. An implicit closing segment contributes to that subpath's length. The direct keyword overrides the config; when omitted, the config value applies and defaults to `"segment"`. Bézier partial lengths use PlanarCurve length and flattening utilities to map local segment parameters to physical distance.
 
+```python
+result = outline(path, profile, width_parameterization="arclength")
+```
 For two unequal segments, a knot at `u=0.5` lies halfway along the combined physical path in arc-length mode. In segment mode it lies at the boundary between the segments, regardless of their lengths.
 
 ## `outline_disc()` and aliases

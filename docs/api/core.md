@@ -12,6 +12,8 @@ The primary API is re-exported from `strokeoutline`. The optional parser is in `
 
 Width progress defaults to segment-index mapping for compatibility. Arc-length mapping is opt-in. See [width profiles](../width-profiles.md).
 
+
+The direct `width_parameterization="arclength"` keyword opts into physical path progress and overrides the config value. When omitted, `config.width_parameterization` applies, defaulting to `"segment"` for compatibility.
 ```{autodata} strokeoutline.DEFAULT_OUTLINE_CONFIG
 
 ```

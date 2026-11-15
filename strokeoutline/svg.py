@@ -16,7 +16,14 @@ except ImportError as exc:  # pragma: no cover
 
 from planarcurve import CubicBezier, QuadraticBezier
 
-from .core import DEFAULT_OUTLINE_CONFIG, OutlineConfig, OutlineResult, WidthProfile, outline
+from .core import (
+    DEFAULT_OUTLINE_CONFIG,
+    OutlineConfig,
+    OutlineResult,
+    WidthParameterization,
+    WidthProfile,
+    outline,
+)
 from .model import Line, Path2D, Subpath
 
 
@@ -104,6 +111,7 @@ def outline_svg_path(
     width: WidthProfile,
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
+    width_parameterization: WidthParameterization | None = None,
 ) -> OutlineResult:
     """Parse and expand SVG path data into closed sampled contours.
 
@@ -115,6 +123,9 @@ def outline_svg_path(
         Constant, piecewise-linear, or callable full-diameter width profile.
     config : OutlineConfig, optional
         Adaptive sampling tolerances and open-path cap selection.
+    width_parameterization : WidthParameterization, optional
+        Width progress domain. When omitted, uses ``config.width_parameterization``,
+        which defaults to ``"segment"``.
 
     Returns
     -------
@@ -137,7 +148,12 @@ def outline_svg_path(
     Importing this module requires FontTools from the optional ``svg`` extra.
     The adapter parses path geometry; it is not a complete SVG/CSS stroker.
     """
-    return outline(path_from_svg(path), width, config=config)
+    return outline(
+        path_from_svg(path),
+        width,
+        config=config,
+        width_parameterization=width_parameterization,
+    )
 
 
 # Compatibility name matching InkGrammar's previous generic entry point.

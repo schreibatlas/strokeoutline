@@ -4,6 +4,8 @@ import math
 
 import pytest
 from planarcurve import CubicBezier, CubicPath, CubicSegment, QuadraticBezier
+from planarcurve.bezier import split_cubic
+from planarcurve.polyline import distance_to_polyline
 
 from strokeoutline import (
     DegeneratePathError,
@@ -19,7 +21,12 @@ from strokeoutline import (
     outline_disc,
     signed_area,
 )
-from strokeoutline.core import _endpoint_tangent, _profile_points, _width_function
+from strokeoutline.core import (
+    _endpoint_tangent,
+    _profile_points,
+    _width_function,
+    _WidthCoordinateMap,
+)
 
 
 def assert_closed_and_finite(result):
@@ -29,6 +36,13 @@ def assert_closed_and_finite(result):
         assert all(math.isfinite(value) for point in contour for value in point)
     assert result.bounds is not None
     assert all(math.isfinite(value) for value in result.bounds)
+
+
+def assert_contours_within_tolerance(left, right, tolerance):
+    assert len(left.contours) == len(right.contours)
+    for first, second in zip(left.contours, right.contours, strict=True):
+        assert max(distance_to_polyline(first, second)) <= tolerance
+        assert max(distance_to_polyline(second, first)) <= tolerance
 
 
 def test_open_line_has_deterministic_round_caps_and_expected_bounds():
@@ -352,6 +366,95 @@ def test_butt_cap_does_not_extend_open_line_endpoints():
 
     assert butt.bounds == (0.0, -1.0, 10.0, 1.0)
     assert square.bounds == (-1.0, -1.0, 11.0, 1.0)
+
+
+def test_segment_width_coordinate_map_preserves_equal_segment_progress():
+    segments = (Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))
+    coordinates = _WidthCoordinateMap(segments, (), "segment")
+
+    assert coordinates.u(0, 0.0) == 0.0
+    assert coordinates.u(0, 1.0) == 0.5
+    assert coordinates.u(1, 0.0) == 0.5
+    assert coordinates.u(1, 0.25) == 0.625
+    assert coordinates.u(1, 1.0) == 1.0
+
+
+def test_outline_width_parameterization_keyword_preserves_default_and_config_compatibility():
+    path = Path2D((Subpath((Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))),))
+    profile = ((0.0, 2.0), (0.5, 10.0), (1.0, 2.0))
+    legacy = outline(path, profile)
+
+    assert legacy == outline(path, profile, width_parameterization="segment")
+    assert legacy == outline(
+        path,
+        profile,
+        config=OutlineConfig(width_parameterization="arclength"),
+        width_parameterization="segment",
+    )
+    assert outline(
+        path, profile, config=OutlineConfig(width_parameterization="arclength")
+    ) == outline(path, profile, width_parameterization="arclength")
+    assert legacy != outline(path, profile, width_parameterization="arclength")
+    assert outline(path, 4.0, width_parameterization="segment") == outline(
+        path, 4.0, width_parameterization="arclength"
+    )
+    with pytest.raises(ValueError, match="width_parameterization"):
+        outline(path, profile, width_parameterization="invalid")
+
+
+def test_arclength_cubic_progress_uses_partial_length_for_nonuniform_speed():
+    curve = CubicBezier((0, 0), (0, 0), (0, 0), (100, 0))
+    coordinates = _WidthCoordinateMap((curve,), (), "arclength")
+
+    assert coordinates.u(0, 0.5) == pytest.approx(0.125)
+
+
+def test_arclength_outline_is_stable_under_exact_cubic_subdivision():
+    curve = CubicBezier((0, 0), (0, 80), (100, 80), (100, 0))
+    left, right = split_cubic(curve, 0.5)
+    left_left, left_right = split_cubic(left, 0.5)
+    right_left, right_right = split_cubic(right, 0.5)
+    paths = (
+        Path2D((Subpath((curve,)),)),
+        Path2D((Subpath((left, right)),)),
+        Path2D((Subpath((left_left, left_right, right_left, right_right)),)),
+    )
+    config = OutlineConfig(
+        max_centerline_error=0.05,
+        max_width_error=0.03,
+        max_normal_angle_degrees=2.0,
+    )
+    profile = ((0.0, 2.0), (0.3, 8.0), (1.0, 3.0))
+    results = tuple(
+        outline(path, profile, config=config, width_parameterization="arclength") for path in paths
+    )
+    tolerance = 2 * config.max_centerline_error
+
+    assert_contours_within_tolerance(results[0], results[1], tolerance)
+    assert_contours_within_tolerance(results[0], results[2], tolerance)
+    assert_contours_within_tolerance(results[1], results[2], tolerance)
+
+
+def test_arclength_restarts_for_independent_subpaths_and_supports_closed_paths():
+    profile = ((0.0, 2.0), (1.0, 10.0))
+    subpaths = (
+        Subpath((Line((0, 0), (10, 0)),)),
+        Subpath((Line((20, 0), (80, 0)),)),
+    )
+    combined = outline(Path2D(subpaths), profile, width_parameterization="arclength")
+    separately_outlined = combine_outlines(
+        outline(Path2D((subpath,)), profile, width_parameterization="arclength")
+        for subpath in subpaths
+    )
+    assert combined == separately_outlined
+
+    closed = Subpath(
+        (Line((0, 0), (10, 0)), Line((10, 0), (10, 10)), Line((10, 10), (0, 0))),
+        closed=True,
+    )
+    closed_result = outline(Path2D((closed,)), profile, width_parameterization="arclength")
+    assert len(closed_result.contours) == 2
+    assert_closed_and_finite(closed_result)
 
 
 def test_arc_length_width_progress_uses_physical_segment_lengths():

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from bisect import bisect_right
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from math import acos, atan2, ceil, cos, degrees, hypot, isclose, isfinite, pi, sin, ulp
+from math import acos, atan2, ceil, cos, degrees, hypot, isclose, isfinite, pi, sin
 from numbers import Real
 from typing import Literal, TypeAlias
 
-from planarcurve import CubicPath, Point2D, QuadraticBezier
+from planarcurve import CubicBezier, CubicPath, Point2D, QuadraticBezier
+from planarcurve.bezier import cubic_length, flatten_cubic, split_cubic
 
 from ._validation import normalize_point
 from .model import Line, Path2D, Segment, Subpath, path_from_cubic_path
@@ -288,9 +290,38 @@ def _width_function(profile: WidthProfile) -> _WidthEvaluator:
 
 
 class _SegmentLength:
-    def __init__(self, segment: Segment) -> None:
+    def __init__(self, segment: Segment, tolerance: float) -> None:
         self.segment = segment
         self.cache = {0.0: 0.0}
+        self.tolerance = tolerance
+        self.parts: list[tuple[float, float, CubicBezier]] = []
+        self.parameters = [0.0]
+        self.cumulative = [0.0]
+        if isinstance(segment, Line):
+            return
+
+        curve = self._as_cubic(segment)
+        self._collect_flat_parts(curve, 0.0, 1.0)
+        for _start, end, piece in self.parts:
+            self.parameters.append(end)
+            self.cumulative.append(self.cumulative[-1] + cubic_length(piece))
+
+    @staticmethod
+    def _as_cubic(segment: Segment) -> CubicBezier:
+        if isinstance(segment, CubicBezier):
+            return segment
+        first_control = _lerp(segment.p0, segment.p1, 2 / 3)
+        second_control = _lerp(segment.p2, segment.p1, 2 / 3)
+        return CubicBezier(segment.p0, first_control, second_control, segment.p2)
+
+    def _collect_flat_parts(self, curve: CubicBezier, start: float, end: float) -> None:
+        if len(flatten_cubic(curve, tolerance=self.tolerance)) == 2:
+            self.parts.append((start, end, curve))
+            return
+        left, right = split_cubic(curve)
+        middle = (start + end) / 2
+        self._collect_flat_parts(left, start, middle)
+        self._collect_flat_parts(right, middle, end)
 
     def at(self, t: float) -> float:
         if t in self.cache:
@@ -303,51 +334,35 @@ class _SegmentLength:
                 )
                 * t
             )
-            self.cache[t] = length
-            return length
-        if t == 0:
-            return 0.0
-
-        def speed(parameter: float) -> float:
-            return hypot(*_tangent(self.segment, parameter))
-
-        start, end = 0.0, t
-        middle = (start + end) / 2
-        start_speed, middle_speed, end_speed = speed(start), speed(middle), speed(end)
-        whole = (end - start) * (start_speed + 4 * middle_speed + end_speed) / 6
-        tolerance = max(abs(whole) * 1e-10, ulp(abs(whole)) * 8)
-        stack = [(start, end, start_speed, middle_speed, end_speed, whole, tolerance, 0)]
-        length = 0.0
-        while stack:
-            a, b, fa, fm, fb, estimate, allowed_error, depth = stack.pop()
-            midpoint = (a + b) / 2
-            left_midpoint = (a + midpoint) / 2
-            right_midpoint = (midpoint + b) / 2
-            flm, frm = speed(left_midpoint), speed(right_midpoint)
-            left = (midpoint - a) * (fa + 4 * flm + fm) / 6
-            right = (b - midpoint) * (fm + 4 * frm + fb) / 6
-            error = left + right - estimate
-            if abs(error) <= 15 * allowed_error or depth >= 20:
-                length += left + right + error / 15
+        elif t == 1.0:
+            length = self.cumulative[-1]
+        else:
+            index = bisect_right(self.parameters, t) - 1
+            start, end, piece = self.parts[index]
+            if t == start:
+                length = self.cumulative[index]
             else:
-                half_error = allowed_error / 2
-                stack.append((midpoint, b, fm, frm, fb, right, half_error, depth + 1))
-                stack.append((a, midpoint, fa, flm, fm, left, half_error, depth + 1))
+                local_parameter = (t - start) / (end - start)
+                partial, _ = split_cubic(piece, local_parameter)
+                length = self.cumulative[index] + cubic_length(partial)
         self.cache[t] = length
         return length
 
 
-class _PathProgress:
+class _WidthCoordinateMap:
     def __init__(
         self,
         segments: Sequence[Segment],
         breakpoints: tuple[float, ...],
         mode: WidthParameterization,
+        length_tolerance: float = 0.01,
     ) -> None:
         self.count = len(segments)
         self.mode = mode
         self.length_maps = (
-            [_SegmentLength(segment) for segment in segments] if mode == "arclength" else []
+            [_SegmentLength(segment, length_tolerance) for segment in segments]
+            if mode == "arclength"
+            else []
         )
         self.lengths = [length_map.at(1.0) for length_map in self.length_maps]
         self.total_length = sum(self.lengths)
@@ -393,7 +408,7 @@ class _PathProgress:
         high_error = abs(length_map.at(high) - target)
         return low if low_error <= high_error else high
 
-    def value(self, index: int, t: float) -> float:
+    def u(self, index: int, t: float) -> float:
         for parameter, progress in self.knots[index]:
             if t == parameter:
                 return progress
@@ -435,7 +450,7 @@ def _angle_between(left: Point2D, right: Point2D) -> float:
 def _flatten_segment(
     segment: Segment,
     segment_index: int,
-    progress: _PathProgress,
+    progress: _WidthCoordinateMap,
     width_at: _WidthEvaluator,
     config: OutlineConfig,
 ) -> list[tuple[float, Point2D]]:
@@ -468,11 +483,11 @@ def _flatten_segment(
                 _angle_between(tangent0, tangent_mid),
                 _angle_between(tangent_mid, tangent1),
             )
-            u0, u1 = progress.value(segment_index, t0), progress.value(segment_index, t1)
+            u0, u1 = progress.u(segment_index, t0), progress.u(segment_index, t1)
             widths = (width_at(u0), width_at(u1))
             width_error = max(
                 abs(
-                    width_at(progress.value(segment_index, t0 + span * fraction))
+                    width_at(progress.u(segment_index, t0 + span * fraction))
                     - (widths[0] + fraction * (widths[1] - widths[0]))
                 )
                 for fraction in (0.25, 0.5, 0.75)
@@ -501,18 +516,26 @@ def _flatten_segment(
 
 
 def _profile_points(
-    segments: Sequence[Segment], width_at: _WidthEvaluator, config: OutlineConfig
+    segments: Sequence[Segment],
+    width_at: _WidthEvaluator,
+    config: OutlineConfig,
+    width_parameterization: WidthParameterization | None = None,
 ) -> tuple[list[Point2D], list[float]]:
     sampled: list[Point2D] = []
     widths: list[float] = []
-    progress = _PathProgress(segments, width_at.breakpoints, config.width_parameterization)
+    progress = _WidthCoordinateMap(
+        segments,
+        width_at.breakpoints,
+        config.width_parameterization if width_parameterization is None else width_parameterization,
+        min(config.max_centerline_error, config.max_width_error) / 4,
+    )
     for index, segment in enumerate(segments):
         samples = _flatten_segment(segment, index, progress, width_at, config)
         for sample_index, (t, point) in enumerate(samples):
             if index and sample_index == 0:
                 continue
             sampled.append(point)
-            widths.append(width_at(progress.value(index, t)))
+            widths.append(width_at(progress.u(index, t)))
     return sampled, widths
 
 
@@ -680,9 +703,10 @@ def _expand_subpath(
     subpath: Subpath,
     width_at: _WidthEvaluator,
     config: OutlineConfig,
+    width_parameterization: WidthParameterization,
 ) -> tuple[Contour, ...]:
     segments = subpath.outlining_segments()
-    points, widths = _profile_points(segments, width_at, config)
+    points, widths = _profile_points(segments, width_at, config, width_parameterization)
     if len(points) < 2 or any(
         hypot(b[0] - a[0], b[1] - a[1]) == 0 for a, b in zip(points, points[1:], strict=False)
     ):
@@ -775,6 +799,7 @@ def outline(
     width: WidthProfile,
     *,
     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
+    width_parameterization: WidthParameterization | None = None,
 ) -> OutlineResult:
     """Expand centerlines into deterministic sampled closed contours.
 
@@ -787,6 +812,9 @@ def outline(
         normalized progress from 0 to 1, or a callable from progress to width.
     config : OutlineConfig, optional
         Adaptive sampling tolerances, caps, joins, and width progression.
+    width_parameterization : WidthParameterization, optional
+        Width progress domain. When omitted, uses ``config.width_parameterization``,
+        which defaults to ``"segment"``.
 
     Returns
     -------
@@ -816,6 +844,11 @@ def outline(
     ``Subpath``. The configured cap applies only to open paths; joins are
     selected by ``config.join``.
     """
+    if width_parameterization is None:
+        width_parameterization = config.width_parameterization
+    elif width_parameterization not in ("segment", "arclength"):
+        raise ValueError("width_parameterization must be 'segment' or 'arclength'")
+
     if isinstance(path, CubicPath):
         path = path_from_cubic_path(path)
     if not isinstance(path, Path2D):
@@ -824,7 +857,7 @@ def outline(
     contours = [
         contour
         for subpath in path.subpaths
-        for contour in _expand_subpath(subpath, width_at, config)
+        for contour in _expand_subpath(subpath, width_at, config, width_parameterization)
     ]
     return _result(contours)
 
