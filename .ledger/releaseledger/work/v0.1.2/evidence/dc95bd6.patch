@@ -1,0 +1,581 @@
+ README.md                     |   6 ++-
+ docs/api/core.md              |   2 +
+ docs/api/svg.md               |   2 +
+ docs/width-profiles.md        |   5 +-
+ examples/02_variable_width.py |   7 ++-
+ examples/README.md            |   2 +-
+ strokeoutline/core.py         | 119 +++++++++++++++++++++++++++---------------
+ strokeoutline/svg.py          |  20 ++++++-
+ tests/test_outline.py         | 105 ++++++++++++++++++++++++++++++++++++-
+ tests/test_svg.py             |  29 +++++++++-
+ 10 files changed, 245 insertions(+), 52 deletions(-)
+
+diff --git a/README.md b/README.md
+index 178e2ab..f786597 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,11 @@ The compatibility default is segment-index progress, restarted for each independ
+ u = (segment_index + local_segment_parameter) / segment_count
+ ```
+
+-It is not physical distance. An implicit closing segment participates in the segment count of a closed subpath. To opt into normalized physical arc length, set `OutlineConfig(width_parameterization="arclength")`.
++It is not physical distance. An implicit closing segment participates in the segment count of a closed subpath. To opt into normalized physical arc length, pass `width_parameterization="arclength"` to `outline()` or `outline_svg_path()`. The existing `OutlineConfig(width_parameterization="arclength")` option remains supported.
++
++```python
++result = outline(path, [(0.0, 2.0), (1.0, 6.0)], width_parameterization="arclength")
++```
+
+ `outline_disc(center, diameter)` evaluates a width profile at `u == 0.5`, since a point has no path progression.
+
+diff --git a/docs/api/core.md b/docs/api/core.md
+index ec5cae0..75a3b12 100644
+--- a/docs/api/core.md
++++ b/docs/api/core.md
+@@ -12,6 +12,8 @@ The primary API is re-exported from `strokeoutline`. The optional parser is in `
+
+ Width progress defaults to segment-index mapping for compatibility. Arc-length mapping is opt-in. See [width profiles](../width-profiles.md).
+
++
++The direct `width_parameterization="arclength"` keyword opts into physical path progress and overrides the config value. When omitted, `config.width_parameterization` applies, defaulting to `"segment"` for compatibility.
+ ```{autodata} strokeoutline.DEFAULT_OUTLINE_CONFIG
+
+ ```
+diff --git a/docs/api/svg.md b/docs/api/svg.md
+index f863f90..ae79e05 100644
+--- a/docs/api/svg.md
++++ b/docs/api/svg.md
+@@ -4,6 +4,8 @@
+
+ The adapter parses SVG path geometry into StrokeOutline's neutral path model, then returns the ordinary immutable `OutlineResult`. It does not render SVG or implement complete SVG/CSS stroke behavior. Regression-covered forms include relative coordinates, horizontal/vertical lines, smooth cubic/quadratic commands, arcs converted to cubic segments, close paths, and multiple subpaths. This is not an exhaustive command compatibility matrix.
+
++`outline_svg_path()` accepts the same `width_parameterization` keyword as `outline()` and forwards it unchanged. The omitted keyword uses `config.width_parameterization`, which defaults to `"segment"`.
++
+ ```{autofunction} strokeoutline.svg.path_from_svg
+
+ ```
+diff --git a/docs/width-profiles.md b/docs/width-profiles.md
+index 1048aac..fa2c3a1 100644
+--- a/docs/width-profiles.md
++++ b/docs/width-profiles.md
+@@ -56,8 +56,11 @@ The implicit closing segment of a closed subpath is inserted before sampling and
+
+ ## Arc-length progress
+
+-Select `OutlineConfig(width_parameterization="arclength")` to use cumulative physical path length normalized to `0..1` for each subpath. Line lengths are direct; Bézier segment lengths are numerically integrated. This mode is opt-in and does not change compatibility behavior.
++Use `outline(path, profile, width_parameterization="arclength")` or `OutlineConfig(width_parameterization="arclength")` to use cumulative physical path length normalized to `0..1` for each subpath. An implicit closing segment contributes to that subpath's length. The direct keyword overrides the config; when omitted, the config value applies and defaults to `"segment"`. Bézier partial lengths use PlanarCurve length and flattening utilities to map local segment parameters to physical distance.
+
++```python
++result = outline(path, profile, width_parameterization="arclength")
++```
+ For two unequal segments, a knot at `u=0.5` lies halfway along the combined physical path in arc-length mode. In segment mode it lies at the boundary between the segments, regardless of their lengths.
+
+ ## `outline_disc()` and aliases
+diff --git a/examples/02_variable_width.py b/examples/02_variable_width.py
+index a35f6a2..3c645f9 100644
+--- a/examples/02_variable_width.py
++++ b/examples/02_variable_width.py
+@@ -4,9 +4,12 @@ from strokeoutline import Line, OutlineConfig, Path2D, Subpath, outline
+
+
+ def main():
+-    path = Path2D((Subpath((Line((0, 0), (100, 0)),)),))
++    path = Path2D((Subpath((Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))),))
+     profile = [(0.0, 2.0), (0.3, 4.0), (0.7, 16.0), (1.0, 6.0)]
+-    result = outline(path, profile, config=OutlineConfig(max_width_error=0.05))
++    config = OutlineConfig(max_width_error=0.05)
++    result = outline(path, profile, config=config, width_parameterization="arclength")
++    segment_progress = outline(path, profile, config=config)
++    assert result != segment_progress
+     constant_width = outline(path, 2.0)
+
+     assert len(result.contours) == 1
+diff --git a/examples/README.md b/examples/README.md
+index d217281..150a541 100644
+--- a/examples/README.md
++++ b/examples/README.md
+@@ -23,7 +23,7 @@ python -m pip install 'strokeoutline[svg]'
+ | Script | Demonstrates | Optional dependency | Expected invariant |
+ | --- | --- | --- | --- |
+ | `01_basic_centerline.py` | Line, quadratic, and cubic segments in one subpath | None | One finite, explicitly closed outline contour |
+-| `02_variable_width.py` | Piecewise width profile and adaptive sampling | None | The wider profile region expands the contour bounds |
++| `02_variable_width.py` | Piecewise width profile, adaptive sampling, and arc-length progress across unequal segments | None | The wider profile region expands the contour bounds independently of segment lengths |
+ | `03_svg_adapter.py` | Multiple SVG subpaths | FontTools via `strokeoutline[svg]` | Two source subpaths produce two independent outline contours |
+ | `04_closed_centerline.py` | Implicit closure and closed-centerline winding | None | Two closed output contours have opposite winding |
+ | `05_planarcurve_interop.py` | Direct `planarcurve.CubicPath` input and callable width | None | Direct input matches the equivalent adapted `Path2D` |
+diff --git a/strokeoutline/core.py b/strokeoutline/core.py
+index bd4ca64..4e19e49 100644
+--- a/strokeoutline/core.py
++++ b/strokeoutline/core.py
+@@ -1,12 +1,14 @@
+ from __future__ import annotations
+
++from bisect import bisect_right
+ from collections.abc import Callable, Iterable, Sequence
+ from dataclasses import dataclass
+-from math import acos, atan2, ceil, cos, degrees, hypot, isclose, isfinite, pi, sin, ulp
++from math import acos, atan2, ceil, cos, degrees, hypot, isclose, isfinite, pi, sin
+ from numbers import Real
+ from typing import Literal, TypeAlias
+
+-from planarcurve import CubicPath, Point2D, QuadraticBezier
++from planarcurve import CubicBezier, CubicPath, Point2D, QuadraticBezier
++from planarcurve.bezier import cubic_length, flatten_cubic, split_cubic
+
+ from ._validation import normalize_point
+ from .model import Line, Path2D, Segment, Subpath, path_from_cubic_path
+@@ -288,9 +290,38 @@ def _width_function(profile: WidthProfile) -> _WidthEvaluator:
+
+
+ class _SegmentLength:
+-    def __init__(self, segment: Segment) -> None:
++    def __init__(self, segment: Segment, tolerance: float) -> None:
+         self.segment = segment
+         self.cache = {0.0: 0.0}
++        self.tolerance = tolerance
++        self.parts: list[tuple[float, float, CubicBezier]] = []
++        self.parameters = [0.0]
++        self.cumulative = [0.0]
++        if isinstance(segment, Line):
++            return
++
++        curve = self._as_cubic(segment)
++        self._collect_flat_parts(curve, 0.0, 1.0)
++        for _start, end, piece in self.parts:
++            self.parameters.append(end)
++            self.cumulative.append(self.cumulative[-1] + cubic_length(piece))
++
++    @staticmethod
++    def _as_cubic(segment: Segment) -> CubicBezier:
++        if isinstance(segment, CubicBezier):
++            return segment
++        first_control = _lerp(segment.p0, segment.p1, 2 / 3)
++        second_control = _lerp(segment.p2, segment.p1, 2 / 3)
++        return CubicBezier(segment.p0, first_control, second_control, segment.p2)
++
++    def _collect_flat_parts(self, curve: CubicBezier, start: float, end: float) -> None:
++        if len(flatten_cubic(curve, tolerance=self.tolerance)) == 2:
++            self.parts.append((start, end, curve))
++            return
++        left, right = split_cubic(curve)
++        middle = (start + end) / 2
++        self._collect_flat_parts(left, start, middle)
++        self._collect_flat_parts(right, middle, end)
+
+     def at(self, t: float) -> float:
+         if t in self.cache:
+@@ -303,51 +334,35 @@ class _SegmentLength:
+                 )
+                 * t
+             )
+-            self.cache[t] = length
+-            return length
+-        if t == 0:
+-            return 0.0
+-
+-        def speed(parameter: float) -> float:
+-            return hypot(*_tangent(self.segment, parameter))
+-
+-        start, end = 0.0, t
+-        middle = (start + end) / 2
+-        start_speed, middle_speed, end_speed = speed(start), speed(middle), speed(end)
+-        whole = (end - start) * (start_speed + 4 * middle_speed + end_speed) / 6
+-        tolerance = max(abs(whole) * 1e-10, ulp(abs(whole)) * 8)
+-        stack = [(start, end, start_speed, middle_speed, end_speed, whole, tolerance, 0)]
+-        length = 0.0
+-        while stack:
+-            a, b, fa, fm, fb, estimate, allowed_error, depth = stack.pop()
+-            midpoint = (a + b) / 2
+-            left_midpoint = (a + midpoint) / 2
+-            right_midpoint = (midpoint + b) / 2
+-            flm, frm = speed(left_midpoint), speed(right_midpoint)
+-            left = (midpoint - a) * (fa + 4 * flm + fm) / 6
+-            right = (b - midpoint) * (fm + 4 * frm + fb) / 6
+-            error = left + right - estimate
+-            if abs(error) <= 15 * allowed_error or depth >= 20:
+-                length += left + right + error / 15
++        elif t == 1.0:
++            length = self.cumulative[-1]
++        else:
++            index = bisect_right(self.parameters, t) - 1
++            start, end, piece = self.parts[index]
++            if t == start:
++                length = self.cumulative[index]
+             else:
+-                half_error = allowed_error / 2
+-                stack.append((midpoint, b, fm, frm, fb, right, half_error, depth + 1))
+-                stack.append((a, midpoint, fa, flm, fm, left, half_error, depth + 1))
++                local_parameter = (t - start) / (end - start)
++                partial, _ = split_cubic(piece, local_parameter)
++                length = self.cumulative[index] + cubic_length(partial)
+         self.cache[t] = length
+         return length
+
+
+-class _PathProgress:
++class _WidthCoordinateMap:
+     def __init__(
+         self,
+         segments: Sequence[Segment],
+         breakpoints: tuple[float, ...],
+         mode: WidthParameterization,
++        length_tolerance: float = 0.01,
+     ) -> None:
+         self.count = len(segments)
+         self.mode = mode
+         self.length_maps = (
+-            [_SegmentLength(segment) for segment in segments] if mode == "arclength" else []
++            [_SegmentLength(segment, length_tolerance) for segment in segments]
++            if mode == "arclength"
++            else []
+         )
+         self.lengths = [length_map.at(1.0) for length_map in self.length_maps]
+         self.total_length = sum(self.lengths)
+@@ -393,7 +408,7 @@ class _PathProgress:
+         high_error = abs(length_map.at(high) - target)
+         return low if low_error <= high_error else high
+
+-    def value(self, index: int, t: float) -> float:
++    def u(self, index: int, t: float) -> float:
+         for parameter, progress in self.knots[index]:
+             if t == parameter:
+                 return progress
+@@ -435,7 +450,7 @@ def _angle_between(left: Point2D, right: Point2D) -> float:
+ def _flatten_segment(
+     segment: Segment,
+     segment_index: int,
+-    progress: _PathProgress,
++    progress: _WidthCoordinateMap,
+     width_at: _WidthEvaluator,
+     config: OutlineConfig,
+ ) -> list[tuple[float, Point2D]]:
+@@ -468,11 +483,11 @@ def _flatten_segment(
+                 _angle_between(tangent0, tangent_mid),
+                 _angle_between(tangent_mid, tangent1),
+             )
+-            u0, u1 = progress.value(segment_index, t0), progress.value(segment_index, t1)
++            u0, u1 = progress.u(segment_index, t0), progress.u(segment_index, t1)
+             widths = (width_at(u0), width_at(u1))
+             width_error = max(
+                 abs(
+-                    width_at(progress.value(segment_index, t0 + span * fraction))
++                    width_at(progress.u(segment_index, t0 + span * fraction))
+                     - (widths[0] + fraction * (widths[1] - widths[0]))
+                 )
+                 for fraction in (0.25, 0.5, 0.75)
+@@ -501,18 +516,26 @@ def _flatten_segment(
+
+
+ def _profile_points(
+-    segments: Sequence[Segment], width_at: _WidthEvaluator, config: OutlineConfig
++    segments: Sequence[Segment],
++    width_at: _WidthEvaluator,
++    config: OutlineConfig,
++    width_parameterization: WidthParameterization | None = None,
+ ) -> tuple[list[Point2D], list[float]]:
+     sampled: list[Point2D] = []
+     widths: list[float] = []
+-    progress = _PathProgress(segments, width_at.breakpoints, config.width_parameterization)
++    progress = _WidthCoordinateMap(
++        segments,
++        width_at.breakpoints,
++        config.width_parameterization if width_parameterization is None else width_parameterization,
++        min(config.max_centerline_error, config.max_width_error) / 4,
++    )
+     for index, segment in enumerate(segments):
+         samples = _flatten_segment(segment, index, progress, width_at, config)
+         for sample_index, (t, point) in enumerate(samples):
+             if index and sample_index == 0:
+                 continue
+             sampled.append(point)
+-            widths.append(width_at(progress.value(index, t)))
++            widths.append(width_at(progress.u(index, t)))
+     return sampled, widths
+
+
+@@ -680,9 +703,10 @@ def _expand_subpath(
+     subpath: Subpath,
+     width_at: _WidthEvaluator,
+     config: OutlineConfig,
++    width_parameterization: WidthParameterization,
+ ) -> tuple[Contour, ...]:
+     segments = subpath.outlining_segments()
+-    points, widths = _profile_points(segments, width_at, config)
++    points, widths = _profile_points(segments, width_at, config, width_parameterization)
+     if len(points) < 2 or any(
+         hypot(b[0] - a[0], b[1] - a[1]) == 0 for a, b in zip(points, points[1:], strict=False)
+     ):
+@@ -775,6 +799,7 @@ def outline(
+     width: WidthProfile,
+     *,
+     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
++    width_parameterization: WidthParameterization | None = None,
+ ) -> OutlineResult:
+     """Expand centerlines into deterministic sampled closed contours.
+
+@@ -787,6 +812,9 @@ def outline(
+         normalized progress from 0 to 1, or a callable from progress to width.
+     config : OutlineConfig, optional
+         Adaptive sampling tolerances, caps, joins, and width progression.
++    width_parameterization : WidthParameterization, optional
++        Width progress domain. When omitted, uses ``config.width_parameterization``,
++        which defaults to ``"segment"``.
+
+     Returns
+     -------
+@@ -816,6 +844,11 @@ def outline(
+     ``Subpath``. The configured cap applies only to open paths; joins are
+     selected by ``config.join``.
+     """
++    if width_parameterization is None:
++        width_parameterization = config.width_parameterization
++    elif width_parameterization not in ("segment", "arclength"):
++        raise ValueError("width_parameterization must be 'segment' or 'arclength'")
++
+     if isinstance(path, CubicPath):
+         path = path_from_cubic_path(path)
+     if not isinstance(path, Path2D):
+@@ -824,7 +857,7 @@ def outline(
+     contours = [
+         contour
+         for subpath in path.subpaths
+-        for contour in _expand_subpath(subpath, width_at, config)
++        for contour in _expand_subpath(subpath, width_at, config, width_parameterization)
+     ]
+     return _result(contours)
+
+diff --git a/strokeoutline/svg.py b/strokeoutline/svg.py
+index fb42e7f..84b839d 100644
+--- a/strokeoutline/svg.py
++++ b/strokeoutline/svg.py
+@@ -16,7 +16,14 @@ except ImportError as exc:  # pragma: no cover
+
+ from planarcurve import CubicBezier, QuadraticBezier
+
+-from .core import DEFAULT_OUTLINE_CONFIG, OutlineConfig, OutlineResult, WidthProfile, outline
++from .core import (
++    DEFAULT_OUTLINE_CONFIG,
++    OutlineConfig,
++    OutlineResult,
++    WidthParameterization,
++    WidthProfile,
++    outline,
++)
+ from .model import Line, Path2D, Subpath
+
+
+@@ -104,6 +111,7 @@ def outline_svg_path(
+     width: WidthProfile,
+     *,
+     config: OutlineConfig = DEFAULT_OUTLINE_CONFIG,
++    width_parameterization: WidthParameterization | None = None,
+ ) -> OutlineResult:
+     """Parse and expand SVG path data into closed sampled contours.
+
+@@ -115,6 +123,9 @@ def outline_svg_path(
+         Constant, piecewise-linear, or callable full-diameter width profile.
+     config : OutlineConfig, optional
+         Adaptive sampling tolerances and open-path cap selection.
++    width_parameterization : WidthParameterization, optional
++        Width progress domain. When omitted, uses ``config.width_parameterization``,
++        which defaults to ``"segment"``.
+
+     Returns
+     -------
+@@ -137,7 +148,12 @@ def outline_svg_path(
+     Importing this module requires FontTools from the optional ``svg`` extra.
+     The adapter parses path geometry; it is not a complete SVG/CSS stroker.
+     """
+-    return outline(path_from_svg(path), width, config=config)
++    return outline(
++        path_from_svg(path),
++        width,
++        config=config,
++        width_parameterization=width_parameterization,
++    )
+
+
+ # Compatibility name matching InkGrammar's previous generic entry point.
+diff --git a/tests/test_outline.py b/tests/test_outline.py
+index 08f803c..6c38d4f 100644
+--- a/tests/test_outline.py
++++ b/tests/test_outline.py
+@@ -4,6 +4,8 @@ import math
+
+ import pytest
+ from planarcurve import CubicBezier, CubicPath, CubicSegment, QuadraticBezier
++from planarcurve.bezier import split_cubic
++from planarcurve.polyline import distance_to_polyline
+
+ from strokeoutline import (
+     DegeneratePathError,
+@@ -19,7 +21,12 @@ from strokeoutline import (
+     outline_disc,
+     signed_area,
+ )
+-from strokeoutline.core import _endpoint_tangent, _profile_points, _width_function
++from strokeoutline.core import (
++    _endpoint_tangent,
++    _profile_points,
++    _width_function,
++    _WidthCoordinateMap,
++)
+
+
+ def assert_closed_and_finite(result):
+@@ -31,6 +38,13 @@ def assert_closed_and_finite(result):
+     assert all(math.isfinite(value) for value in result.bounds)
+
+
++def assert_contours_within_tolerance(left, right, tolerance):
++    assert len(left.contours) == len(right.contours)
++    for first, second in zip(left.contours, right.contours, strict=True):
++        assert max(distance_to_polyline(first, second)) <= tolerance
++        assert max(distance_to_polyline(second, first)) <= tolerance
++
++
+ def test_open_line_has_deterministic_round_caps_and_expected_bounds():
+     path = Path2D((Subpath((Line((0, 0), (10, 0)),)),))
+     first = outline(path, 2.0)
+@@ -354,6 +368,95 @@ def test_butt_cap_does_not_extend_open_line_endpoints():
+     assert square.bounds == (-1.0, -1.0, 11.0, 1.0)
+
+
++def test_segment_width_coordinate_map_preserves_equal_segment_progress():
++    segments = (Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))
++    coordinates = _WidthCoordinateMap(segments, (), "segment")
++
++    assert coordinates.u(0, 0.0) == 0.0
++    assert coordinates.u(0, 1.0) == 0.5
++    assert coordinates.u(1, 0.0) == 0.5
++    assert coordinates.u(1, 0.25) == 0.625
++    assert coordinates.u(1, 1.0) == 1.0
++
++
++def test_outline_width_parameterization_keyword_preserves_default_and_config_compatibility():
++    path = Path2D((Subpath((Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))),))
++    profile = ((0.0, 2.0), (0.5, 10.0), (1.0, 2.0))
++    legacy = outline(path, profile)
++
++    assert legacy == outline(path, profile, width_parameterization="segment")
++    assert legacy == outline(
++        path,
++        profile,
++        config=OutlineConfig(width_parameterization="arclength"),
++        width_parameterization="segment",
++    )
++    assert outline(
++        path, profile, config=OutlineConfig(width_parameterization="arclength")
++    ) == outline(path, profile, width_parameterization="arclength")
++    assert legacy != outline(path, profile, width_parameterization="arclength")
++    assert outline(path, 4.0, width_parameterization="segment") == outline(
++        path, 4.0, width_parameterization="arclength"
++    )
++    with pytest.raises(ValueError, match="width_parameterization"):
++        outline(path, profile, width_parameterization="invalid")
++
++
++def test_arclength_cubic_progress_uses_partial_length_for_nonuniform_speed():
++    curve = CubicBezier((0, 0), (0, 0), (0, 0), (100, 0))
++    coordinates = _WidthCoordinateMap((curve,), (), "arclength")
++
++    assert coordinates.u(0, 0.5) == pytest.approx(0.125)
++
++
++def test_arclength_outline_is_stable_under_exact_cubic_subdivision():
++    curve = CubicBezier((0, 0), (0, 80), (100, 80), (100, 0))
++    left, right = split_cubic(curve, 0.5)
++    left_left, left_right = split_cubic(left, 0.5)
++    right_left, right_right = split_cubic(right, 0.5)
++    paths = (
++        Path2D((Subpath((curve,)),)),
++        Path2D((Subpath((left, right)),)),
++        Path2D((Subpath((left_left, left_right, right_left, right_right)),)),
++    )
++    config = OutlineConfig(
++        max_centerline_error=0.05,
++        max_width_error=0.03,
++        max_normal_angle_degrees=2.0,
++    )
++    profile = ((0.0, 2.0), (0.3, 8.0), (1.0, 3.0))
++    results = tuple(
++        outline(path, profile, config=config, width_parameterization="arclength") for path in paths
++    )
++    tolerance = 2 * config.max_centerline_error
++
++    assert_contours_within_tolerance(results[0], results[1], tolerance)
++    assert_contours_within_tolerance(results[0], results[2], tolerance)
++    assert_contours_within_tolerance(results[1], results[2], tolerance)
++
++
++def test_arclength_restarts_for_independent_subpaths_and_supports_closed_paths():
++    profile = ((0.0, 2.0), (1.0, 10.0))
++    subpaths = (
++        Subpath((Line((0, 0), (10, 0)),)),
++        Subpath((Line((20, 0), (80, 0)),)),
++    )
++    combined = outline(Path2D(subpaths), profile, width_parameterization="arclength")
++    separately_outlined = combine_outlines(
++        outline(Path2D((subpath,)), profile, width_parameterization="arclength")
++        for subpath in subpaths
++    )
++    assert combined == separately_outlined
++
++    closed = Subpath(
++        (Line((0, 0), (10, 0)), Line((10, 0), (10, 10)), Line((10, 10), (0, 0))),
++        closed=True,
++    )
++    closed_result = outline(Path2D((closed,)), profile, width_parameterization="arclength")
++    assert len(closed_result.contours) == 2
++    assert_closed_and_finite(closed_result)
++
++
+ def test_arc_length_width_progress_uses_physical_segment_lengths():
+     segments = (Line((0, 0), (10, 0)), Line((10, 0), (100, 0)))
+     profile = ((0.0, 2.0), (0.5, 10.0), (1.0, 2.0))
+diff --git a/tests/test_svg.py b/tests/test_svg.py
+index 5151127..c49e3bb 100644
+--- a/tests/test_svg.py
++++ b/tests/test_svg.py
+@@ -4,7 +4,15 @@ import math
+
+ import pytest
+
+-from strokeoutline import CubicBezier, Line, OutlineConfig, QuadraticBezier, signed_area
++from strokeoutline import (
++    CubicBezier,
++    Line,
++    OutlineConfig,
++    QuadraticBezier,
++    WidthParameterization,
++    outline,
++    signed_area,
++)
+ from strokeoutline.svg import outline_svg_path, path_from_svg
+
+
+@@ -65,6 +73,25 @@ def test_svg_arc_and_close_commands_produce_supported_geometry():
+     assert all(math.isfinite(value) for value in result.bounds)
+
+
++def test_svg_adapter_forwards_width_parameterization():
++    path = "M 0 0 L 10 0 L 100 0"
++    profile = ((0.0, 2.0), (0.5, 10.0), (1.0, 2.0))
++    mode: WidthParameterization = "arclength"
++
++    legacy = outline_svg_path(path, profile)
++    arclength = outline_svg_path(path, profile, width_parameterization=mode)
++    expected = outline(path_from_svg(path), profile, width_parameterization=mode)
++
++    assert arclength == expected
++    assert arclength != legacy
++    assert (
++        outline_svg_path(path, profile, config=OutlineConfig(width_parameterization="arclength"))
++        == arclength
++    )
++    with pytest.raises(ValueError, match="width_parameterization"):
++        outline_svg_path(path, profile, width_parameterization="invalid")
++
++
+ def test_svg_move_only_subpath_is_rejected():
+     with pytest.raises(ValueError, match="no drawable segments"):
+         path_from_svg("M 0 0")

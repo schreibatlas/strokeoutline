@@ -1,0 +1,189 @@
+schema_version: 1
+object_type: commit_audit_sheet
+versioning:
+  schema_version: 1
+  revision: 5
+release_version: 0.1.0
+git_base_ref: 45294928810795e3e59eac328a746cbd9bba7462
+git_base_sha: 45294928810795e3e59eac328a746cbd9bba7462
+git_head_ref: v0.1.0
+git_head_sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+git_range: 45294928810795e3e59eac328a746cbd9bba7462..72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+commit_count: 4
+rows:
+- sha: ff54e3feba3bc9f7b9b504b95996d8510c5a98f0
+  source_ref: git:ff54e3feba3bc9f7b9b504b95996d8510c5a98f0
+  short_sha: ff54e3f
+  changed_paths:
+  - .codecrate.toml
+  - .github/workflows/ci.yml
+  - .github/workflows/publish.yml
+  - .gitignore
+  - .ledger/ledger.toml
+  - .ledger/releaseledger/.ledger-project.toml
+  - .ledger/releaseledger/config.toml
+  - .ledger/releaseledger/data/.ledger-project.toml
+  - .ledger/taskledger/.ledger-project.toml
+  - .ledger/taskledger/config.toml
+  - .pre-commit-config.yaml
+  - README.md
+  - pyproject.toml
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/py.typed
+  - strokeoutline/svg.py
+  - tests/test_boundaries.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  stats:
+    files_changed: 21
+    insertions: 1327
+    deletions: 1
+  inspected: true
+  inspected_paths:
+  - README.md
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  observed_behavior: Introduced deterministic centerline expansion for constant and
+    variable widths, Bezier paths, and optional SVG path input.
+  public_impact: public
+  decision: accepted
+  stale: false
+  evidence_subject: 'feat: initial version'
+  target_entry_id: entry-0001
+  notes: ''
+- sha: 92abc3d25fc7044bb26e489131764d7439426fdb
+  source_ref: git:92abc3d25fc7044bb26e489131764d7439426fdb
+  short_sha: 92abc3d
+  changed_paths:
+  - README.md
+  - examples/01_basic_centerline.py
+  - examples/02_variable_width.py
+  - examples/03_svg_adapter.py
+  - examples/04_closed_centerline.py
+  - examples/05_planarcurve_interop.py
+  - examples/README.md
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_boundaries.py
+  - tests/test_examples.py
+  - tests/test_model.py
+  - tests/test_outline.py
+  stats:
+    files_changed: 14
+    insertions: 344
+    deletions: 18
+  inspected: true
+  inspected_paths:
+  - README.md
+  - examples/README.md
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_examples.py
+  - tests/test_model.py
+  - tests/test_outline.py
+  observed_behavior: Added polyline construction and ordered outline composition helpers,
+    with tested runnable examples.
+  public_impact: public
+  decision: accepted
+  stale: false
+  evidence_subject: 'feat: add examples'
+  target_entry_id: entry-0002
+  notes: ''
+- sha: 18438358878d0761660a57d50facca7bc4192473
+  source_ref: git:18438358878d0761660a57d50facca7bc4192473
+  short_sha: '1843835'
+  changed_paths:
+  - .ledger/releaseledger/config.toml
+  - .readthedocs.yaml
+  - README.md
+  - docs/Makefile
+  - docs/conf.py
+  - docs/make.bat
+  - docs/make.py
+  - docs/requirements.txt
+  - examples/01_basic_centerline.py
+  - examples/04_closed_centerline.py
+  - examples/05_planarcurve_interop.py
+  stats:
+    files_changed: 11
+    insertions: 330
+    deletions: 21
+  inspected: true
+  inspected_paths:
+  - .readthedocs.yaml
+  - docs/Makefile
+  - docs/make.py
+  - docs/requirements.txt
+  observed_behavior: Added a Sphinx documentation build and Read the Docs configuration
+    for publishing project guides.
+  public_impact: internal
+  decision: internal
+  stale: false
+  evidence_subject: 'chore: pre-commit'
+  notes: ''
+- sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+  source_ref: git:72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+  short_sha: 72d8e8d
+  changed_paths:
+  - .github/workflows/ci.yml
+  - README.md
+  - docs/_static/basic-outline.svg
+  - docs/_static/closed-centerline.svg
+  - docs/_static/variable-width.svg
+  - docs/api/core.md
+  - docs/api/index.md
+  - docs/api/model.md
+  - docs/api/svg.md
+  - docs/closed-paths.md
+  - docs/composition.md
+  - docs/concepts.md
+  - docs/conf.py
+  - docs/configuration.md
+  - docs/development.md
+  - docs/examples.md
+  - docs/getting-started.md
+  - docs/index.md
+  - docs/integration.md
+  - docs/limitations.md
+  - docs/path-model.md
+  - docs/requirements.txt
+  - docs/svg.md
+  - docs/width-profiles.md
+  - pyproject.toml
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  stats:
+    files_changed: 28
+    insertions: 1164
+    deletions: 91
+  inspected: true
+  inspected_paths:
+  - docs/api/core.md
+  - docs/api/model.md
+  - docs/api/svg.md
+  - docs/closed-paths.md
+  - docs/configuration.md
+  - docs/getting-started.md
+  - docs/path-model.md
+  - docs/svg.md
+  - docs/width-profiles.md
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  observed_behavior: Added the Sphinx user guide and API reference for paths, width
+    profiles, configuration, composition, and SVG parsing.
+  public_impact: docs
+  decision: accepted
+  stale: false
+  evidence_subject: 'doc: added docs'
+  target_entry_id: entry-0003
+  notes: ''

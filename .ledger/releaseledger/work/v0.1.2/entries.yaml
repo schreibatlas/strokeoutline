@@ -1,0 +1,33 @@
+schema: releaseledger.entry-batch.v1
+operation: create
+schema_version: 1
+object_type: release_entry_batch
+release_version: v0.1.2
+git_base_ref: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+git_base_sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+git_head_ref: dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+git_head_sha: dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+include_merges: nontrivial
+entries:
+- kind: added
+  summary: 'Added per-call width_parameterization overrides to outline() and outline_svg_path()'
+  status: accepted
+  source_refs:
+  - git:dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+  paths:
+  - README.md
+  - docs/api/core.md
+  - docs/api/svg.md
+  - docs/width-profiles.md
+  - examples/02_variable_width.py
+  - examples/README.md
+  - strokeoutline/core.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  sources:
+  - git:dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+  prs: []
+  issues: []
+  contributors:
+  - '@holgern'

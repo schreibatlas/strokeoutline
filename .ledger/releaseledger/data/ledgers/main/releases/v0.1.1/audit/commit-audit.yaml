@@ -1,0 +1,104 @@
+schema_version: 1
+object_type: commit_audit_sheet
+versioning:
+  schema_version: 1
+  revision: 3
+release_version: v0.1.1
+git_base_ref: v0.1.0
+git_base_sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+git_head_ref: v0.1.1
+git_head_sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+git_range: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e..b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+commit_count: 2
+rows:
+- sha: f3b969da361b24417aae1de7c43d3aad2f4ed7aa
+  source_ref: git:f3b969da361b24417aae1de7c43d3aad2f4ed7aa
+  short_sha: f3b969d
+  changed_paths:
+  - .github/workflows/ci.yml
+  - .github/workflows/publish.yml
+  - .pre-commit-config.yaml
+  - README.md
+  - docs/api/core.md
+  - docs/api/svg.md
+  - docs/closed-paths.md
+  - docs/concepts.md
+  - docs/configuration.md
+  - docs/development.md
+  - docs/examples.md
+  - docs/getting-started.md
+  - docs/index.md
+  - docs/integration.md
+  - docs/limitations.md
+  - docs/make.py
+  - docs/path-model.md
+  - docs/svg.md
+  - docs/width-profiles.md
+  - examples/01_basic_centerline.py
+  - examples/02_variable_width.py
+  - examples/03_svg_adapter.py
+  - examples/04_closed_centerline.py
+  - examples/05_planarcurve_interop.py
+  - examples/06_polyline_and_composition.py
+  - examples/07_caps_and_disc.py
+  - examples/README.md
+  - pyproject.toml
+  - strokeoutline/__init__.py
+  - strokeoutline/_validation.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_boundaries.py
+  - tests/test_examples.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  stats:
+    files_changed: 36
+    insertions: 1241
+    deletions: 540
+  inspected: true
+  inspected_paths:
+  - README.md
+  - docs/api/core.md
+  - docs/api/svg.md
+  - docs/configuration.md
+  - docs/getting-started.md
+  - docs/width-profiles.md
+  - strokeoutline/__init__.py
+  - strokeoutline/_validation.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  observed_behavior: Added opt-in butt caps and explicit join styles, arc-length width
+    progress, and stronger geometry validation and adaptive sampling.
+  public_impact: public
+  decision: accepted
+  stale: false
+  evidence_subject: 'feat: improve docs'
+  target_entry_id: entry-0001
+  notes: ''
+- sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+  source_ref: git:b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+  short_sha: b8e8a5a
+  changed_paths:
+  - .ledger/releaseledger/data/ledgers/main/events/events.jsonl
+  - .ledger/releaseledger/data/ledgers/main/releases/v0.1.1/release.md
+  - .ledger/releaseledger/write.lock
+  - docs/changelog.md
+  - docs/index.md
+  stats:
+    files_changed: 5
+    insertions: 34
+    deletions: 0
+  inspected: true
+  inspected_paths:
+  - docs/changelog.md
+  - docs/index.md
+  observed_behavior: Added a generated changelog page and linked it from documentation
+    navigation; no runtime behavior changed.
+  public_impact: internal
+  decision: internal
+  stale: false
+  evidence_subject: 'doc: changelog'
+  notes: Changelog scaffolding and documentation navigation only; no library behavior.

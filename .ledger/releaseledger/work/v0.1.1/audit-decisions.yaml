@@ -1,0 +1,36 @@
+rows:
+- sha: f3b969da361b24417aae1de7c43d3aad2f4ed7aa
+  inspected: true
+  inspected_paths:
+  - README.md
+  - docs/api/core.md
+  - docs/api/svg.md
+  - docs/configuration.md
+  - docs/getting-started.md
+  - docs/width-profiles.md
+  - strokeoutline/__init__.py
+  - strokeoutline/_validation.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  observed_behavior: 'Added opt-in butt caps and explicit join styles, arc-length width progress, and stronger geometry validation and adaptive sampling.'
+  public_impact: public
+  decision: accepted
+  target_entry_key: null
+  target_entry_id: null
+  notes: ''
+  stale: false
+- sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+  inspected: true
+  inspected_paths:
+  - docs/changelog.md
+  - docs/index.md
+  observed_behavior: 'Added a generated changelog page and linked it from documentation navigation; no runtime behavior changed.'
+  public_impact: internal
+  decision: internal
+  target_entry_key: null
+  target_entry_id: null
+  notes: 'Changelog scaffolding and documentation navigation only; no library behavior.'
+  stale: false

@@ -1,0 +1,67 @@
+schema: releaseledger.entry-batch.v1
+operation: create
+schema_version: 1
+object_type: release_entry_batch
+release_version: 0.1.0
+git_base_ref: 45294928810795e3e59eac328a746cbd9bba7462
+git_base_sha: 45294928810795e3e59eac328a746cbd9bba7462
+git_head_ref: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+git_head_sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+include_merges: nontrivial
+entries:
+- kind: added
+  summary: 'Added constant- and variable-width centerline outlining for line and Bezier paths, with optional SVG path input'
+  status: accepted
+  source_refs:
+  - git:ff54e3feba3bc9f7b9b504b95996d8510c5a98f0
+  paths:
+  - README.md
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  sources:
+  - git:ff54e3feba3bc9f7b9b504b95996d8510c5a98f0
+  prs: []
+  issues: []
+  contributors:
+  - '@holgern'
+- kind: added
+  summary: 'Added path_from_polyline() and combine_outlines() helpers'
+  status: accepted
+  source_refs:
+  - git:92abc3d25fc7044bb26e489131764d7439426fdb
+  paths:
+  - README.md
+  - examples/README.md
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_model.py
+  sources:
+  - git:92abc3d25fc7044bb26e489131764d7439426fdb
+  prs: []
+  issues: []
+  contributors:
+  - '@holgern'
+- kind: docs
+  summary: 'Documented path models, width profiles, configuration, composition, and SVG parsing in a Sphinx guide and API reference'
+  status: accepted
+  source_refs:
+  - git:72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+  paths:
+  - docs/api/core.md
+  - docs/api/index.md
+  - docs/api/model.md
+  - docs/api/svg.md
+  - docs/configuration.md
+  - docs/getting-started.md
+  - docs/path-model.md
+  - docs/svg.md
+  - docs/width-profiles.md
+  sources:
+  - git:72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+  prs: []
+  issues: []
+  contributors:
+  - '@holgern'

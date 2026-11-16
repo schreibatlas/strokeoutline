@@ -1,0 +1,32 @@
+schema: releaseledger.entry-batch.v1
+operation: create
+schema_version: 1
+object_type: release_entry_batch
+release_version: v0.1.1
+git_base_ref: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+git_base_sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+git_head_ref: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+git_head_sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+include_merges: nontrivial
+entries:
+- kind: added
+  summary: 'Added opt-in butt caps, configurable joins, and arc-length width progression'
+  status: accepted
+  source_refs:
+  - git:f3b969da361b24417aae1de7c43d3aad2f4ed7aa
+  paths:
+  - README.md
+  - docs/api/core.md
+  - docs/configuration.md
+  - docs/width-profiles.md
+  - strokeoutline/_validation.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  sources:
+  - git:f3b969da361b24417aae1de7c43d3aad2f4ed7aa
+  prs: []
+  issues: []
+  contributors:
+  - '@holgern'

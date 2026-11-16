@@ -1,0 +1,72 @@
+rows:
+- sha: ff54e3feba3bc9f7b9b504b95996d8510c5a98f0
+  inspected: true
+  inspected_paths:
+  - README.md
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  - tests/test_outline.py
+  - tests/test_svg.py
+  observed_behavior: 'Introduced deterministic centerline expansion for constant and variable widths, Bezier paths, and optional SVG path input.'
+  public_impact: public
+  decision: accepted
+  target_entry_key: null
+  target_entry_id: null
+  notes: ''
+  stale: false
+- sha: 92abc3d25fc7044bb26e489131764d7439426fdb
+  inspected: true
+  inspected_paths:
+  - README.md
+  - examples/README.md
+  - strokeoutline/__init__.py
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - tests/test_examples.py
+  - tests/test_model.py
+  - tests/test_outline.py
+  observed_behavior: 'Added polyline construction and ordered outline composition helpers, with tested runnable examples.'
+  public_impact: public
+  decision: accepted
+  target_entry_key: null
+  target_entry_id: null
+  notes: ''
+  stale: false
+- sha: 18438358878d0761660a57d50facca7bc4192473
+  inspected: true
+  inspected_paths:
+  - .readthedocs.yaml
+  - docs/Makefile
+  - docs/make.py
+  - docs/requirements.txt
+  observed_behavior: 'Added a Sphinx documentation build and Read the Docs configuration for publishing project guides.'
+  public_impact: internal
+  decision: internal
+  target_entry_key: null
+  target_entry_id: null
+  notes: ''
+  stale: false
+- sha: 72d8e8d28b025f6a198ae235b13cdacf9cfc096e
+  inspected: true
+  inspected_paths:
+  - docs/api/core.md
+  - docs/api/model.md
+  - docs/api/svg.md
+  - docs/closed-paths.md
+  - docs/configuration.md
+  - docs/getting-started.md
+  - docs/path-model.md
+  - docs/svg.md
+  - docs/width-profiles.md
+  - strokeoutline/core.py
+  - strokeoutline/model.py
+  - strokeoutline/svg.py
+  observed_behavior: 'Added the Sphinx user guide and API reference for paths, width profiles, configuration, composition, and SVG parsing.'
+  public_impact: docs
+  decision: accepted
+  target_entry_key: null
+  target_entry_id: null
+  notes: ''
+  stale: false

@@ -1,0 +1,34 @@
+{
+  "candidate_count": 1,
+  "candidates": [
+    {
+      "additions": 245,
+      "deletions": 52,
+      "patch_file": "dc95bd6.patch",
+      "patch_sha256": "3e8c0dba87ab4679dc3530b4f18a1aceb1c92dd97b50c48642e7f10ff3a40a05",
+      "paths": [
+        "README.md",
+        "docs/api/core.md",
+        "docs/api/svg.md",
+        "docs/width-profiles.md",
+        "examples/02_variable_width.py",
+        "examples/README.md",
+        "strokeoutline/core.py",
+        "strokeoutline/svg.py",
+        "tests/test_outline.py",
+        "tests/test_svg.py"
+      ],
+      "sha": "dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f",
+      "short_sha": "dc95bd6",
+      "source_ref": "git:dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f"
+    }
+  ],
+  "git_base_ref": "b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d",
+  "git_base_sha": "b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d",
+  "git_head_ref": "dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f",
+  "git_head_sha": "dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f",
+  "include_merges": "nontrivial",
+  "object_type": "git_evidence_manifest",
+  "release_version": "v0.1.2",
+  "schema_version": 1
+}

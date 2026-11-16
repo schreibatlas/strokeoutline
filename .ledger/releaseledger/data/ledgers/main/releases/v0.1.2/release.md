@@ -1,0 +1,27 @@
+---
+schema_version: 2
+object_type: release
+versioning:
+  schema_version: 1
+  revision: 4
+version: v0.1.2
+status: released
+history_state: curated
+title: null
+released_at: '2026-11-15'
+previous_version: v0.1.1
+cancel_reason: null
+superseded_by: null
+changelog_file: docs/changelog.md
+boundary_ref: null
+source_refs: []
+source_count: null
+entry_count: 1
+artifact_count: 0
+git_base_ref: v0.1.1
+git_base_sha: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d
+git_head_ref: HEAD
+git_head_sha: dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+git_range: b8e8a5a60ad7dd6bc7ded27feabb4808c621ce4d..dc95bd673cfeaef8b59b1fe46550b5f65ca2ce8f
+git_commit_count: 1
+---
