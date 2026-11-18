@@ -1,0 +1,41 @@
+schema_version: 1
+object_type: commit_audit_sheet
+versioning:
+  schema_version: 1
+  revision: 1
+release_version: v0.1.3
+git_base_ref: v0.1.2
+git_base_sha: 1fc26fc60f5feca9dc5c62a1fd2c4228a184c118
+git_head_ref: HEAD
+git_head_sha: 93b1f412a465c65e087004a206bbf168f6a11926
+git_range: 1fc26fc60f5feca9dc5c62a1fd2c4228a184c118..93b1f412a465c65e087004a206bbf168f6a11926
+commit_count: 1
+rows:
+- sha: 93b1f412a465c65e087004a206bbf168f6a11926
+  source_ref: git:93b1f412a465c65e087004a206bbf168f6a11926
+  short_sha: 93b1f41
+  changed_paths:
+  - README.md
+  - docs/examples.md
+  - docs/index.md
+  - docs/rasterization.md
+  - examples/08_raster_coverage.py
+  - examples/09_multi_stroke_render.py
+  - examples/README.md
+  - pyproject.toml
+  - strokeoutline/__init__.py
+  - strokeoutline/raster.py
+  - tests/test_raster.py
+  - tests/test_render_strokes.py
+  - tests/test_vector_raster_parity.py
+  stats:
+    files_changed: 13
+    insertions: 843
+    deletions: 2
+  inspected: false
+  inspected_paths: []
+  observed_behavior: ''
+  public_impact: unknown
+  decision: needs_review
+  stale: false
+  evidence_subject: 'feat: rasterization'
