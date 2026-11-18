@@ -18,6 +18,13 @@ SVG path parsing is optional and requires FontTools:
 python -m pip install 'strokeoutline[svg]'
 ```
 
+
+Contour rasterization is optional and requires Pillow:
+
+```bash
+python -m pip install 'strokeoutline[raster]'
+```
+
 ## Quick start
 
 ```python

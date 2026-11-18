@@ -32,6 +32,18 @@ from .model import (
     path_from_cubic_path,
     path_from_polyline,
 )
+from .raster import (
+    MultiStrokeRender,
+    RasterConfig,
+    RasterFrame,
+    RasterizedOutline,
+    RenderedStrokeLayer,
+    StrokeInput,
+    StrokeRender,
+    rasterize_outline,
+    render_stroke,
+    render_strokes,
+)
 
 try:
     from ._version import __version__
@@ -51,6 +63,16 @@ __all__ = [
     "OutlineConfig",
     "OutlineError",
     "OutlineResult",
+    "MultiStrokeRender",
+    "RasterConfig",
+    "RasterFrame",
+    "RasterizedOutline",
+    "rasterize_outline",
+    "render_stroke",
+    "render_strokes",
+    "RenderedStrokeLayer",
+    "StrokeInput",
+    "StrokeRender",
     "Path2D",
     "Point2D",
     "QuadraticBezier",

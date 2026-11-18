@@ -30,7 +30,7 @@ StrokeOutline is a sampled expander, not a complete SVG/CSS stroker or general-p
 
 ## Examples
 
-The [examples guide](examples.md) covers seven scripts, expected invariants, optional dependencies, and import safety.
+The [examples guide](examples.md) covers nine scripts, expected invariants, optional dependencies, and import safety.
 
 ```{toctree}
 :maxdepth: 2
@@ -41,6 +41,7 @@ concepts
 path-model
 width-profiles
 configuration
+rasterization
 closed-paths
 svg
 composition

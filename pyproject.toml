@@ -46,9 +46,11 @@ Changelog = "https://github.com/schreibatlas/strokeoutline/releases"
 
 [project.optional-dependencies]
 svg = ["fonttools>=4.55"]
+raster = ["Pillow>=10"]
 dev = [
   "build>=1.2",
   "fonttools>=4.55",
+  "Pillow>=10",
   "pytest>=8",
   "ruff>=0.8",
   "twine>=5",
